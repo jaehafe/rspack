@@ -3603,6 +3603,11 @@ impl OptimizationOptionsBuilder {
         ));
     }
     let inner_graph = d!(self.inner_graph, production);
+    if inner_graph {
+      builder_context
+        .plugins
+        .push(BuiltinPluginOptions::InnerGraphPlugin);
+    }
     if !d!(self.emit_on_errors, !production) {
       builder_context
         .plugins
@@ -3690,6 +3695,7 @@ pub struct ExperimentsBuilder {
   /// Whether to enable async web assembly.
   async_web_assembly: Option<bool>,
   // TODO: lazy compilation
+  advanced_tree_shaking: Option<bool>,
 }
 
 impl From<Experiments> for ExperimentsBuilder {
@@ -3698,6 +3704,7 @@ impl From<Experiments> for ExperimentsBuilder {
       future_defaults: None,
       css: Some(value.css),
       async_web_assembly: None,
+      advanced_tree_shaking: Some(value.advanced_tree_shaking),
     }
   }
 }
@@ -3708,6 +3715,7 @@ impl From<&mut ExperimentsBuilder> for ExperimentsBuilder {
       future_defaults: value.future_defaults.take(),
       css: value.css.take(),
       async_web_assembly: value.async_web_assembly.take(),
+      advanced_tree_shaking: value.advanced_tree_shaking.take(),
     }
   }
 }
@@ -3748,6 +3756,7 @@ impl ExperimentsBuilder {
     Ok(Experiments {
       css: d!(self.css, false),
       defer_import: false,
+      advanced_tree_shaking: d!(self.advanced_tree_shaking, false),
     })
   }
 }
