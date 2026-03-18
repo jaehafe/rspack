@@ -573,8 +573,6 @@ impl JavascriptParserHooks {
   }
 }
 
-pub type JavaScriptParserPluginDrive = JavascriptParserHooks;
-
 impl JavascriptParserHooks {
   pub fn call_member_chain_from_call_expr(
     &self,
@@ -600,6 +598,7 @@ impl JavascriptParserHooks {
 #[cfg(test)]
 mod tests {
   use super::HookMap;
+  use crate::parser_plugin::hook::{define_parser_sync_bail_hook, define_parser_sync_hook};
 
   define_parser_sync_hook!(TestSync, TestSyncHook, (values: &mut Vec<u8>));
   define_parser_sync_bail_hook!(TestBail, TestBailHook, (values: &mut Vec<u8>) -> u8);

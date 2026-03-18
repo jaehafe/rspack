@@ -1,5 +1,6 @@
-use rustc_hash::FxHashMap;
+use std::borrow::Cow;
 
+use rustc_hash::FxHashMap;
 macro_rules! define_parser_sync_hook {
   ($trait_name:ident, $hook_name:ident, ($($arg:ident : $arg_ty:ty),* $(,)?)) => {
     pub trait $trait_name {
@@ -13,7 +14,9 @@ macro_rules! define_parser_sync_hook {
 
     impl Default for $hook_name {
       fn default() -> Self {
-        Self { taps: Vec::new() }
+        Self {
+          taps: Vec::new(),
+        }
       }
     }
 
@@ -52,7 +55,9 @@ macro_rules! define_parser_sync_bail_hook {
 
     impl Default for $hook_name {
       fn default() -> Self {
-        Self { taps: Vec::new() }
+        Self {
+          taps: Vec::new(),
+        }
       }
     }
 
@@ -90,7 +95,9 @@ macro_rules! define_parser_sync_bail_hook {
 
     impl Default for $hook_name {
       fn default() -> Self {
-        Self { taps: Vec::new() }
+        Self {
+          taps: Vec::new(),
+        }
       }
     }
 
@@ -123,7 +130,7 @@ pub(crate) use define_parser_sync_hook;
 
 #[derive(Debug, Default)]
 pub struct HookMap<H> {
-  map: FxHashMap<String, H>,
+  map: FxHashMap<Cow<'static, str>, H>,
 }
 
 impl<H> HookMap<H> {
@@ -139,7 +146,11 @@ impl<H> HookMap<H> {
 
 impl<H: Default> HookMap<H> {
   pub fn r#for(&mut self, key: impl ToString) -> &mut H {
-    self.map.entry(key.to_string()).or_default()
+    self.map.entry(Cow::Owned(key.to_string())).or_default()
+  }
+
+  pub fn for_static(&mut self, key: &'static str) -> &mut H {
+    self.map.entry(Cow::Borrowed(key)).or_default()
   }
 }
 
@@ -153,7 +164,7 @@ mod tests {
     assert_eq!(map.len(), 0);
     assert!(map.get("a").is_none());
 
-    map.r#for("a").push(1);
+    map.for_static("a").push(1);
 
     assert_eq!(map.len(), 1);
     assert_eq!(map.get("a"), Some(&vec![1]));

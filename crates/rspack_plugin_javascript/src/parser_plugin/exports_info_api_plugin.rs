@@ -87,8 +87,8 @@ impl JavascriptParserPlugin for ExportsInfoApiPlugin {
     context
       .hooks
       .member_chain
-      .r#for(EXPORTS_INFO)
+      .for_static(EXPORTS_INFO)
       .tap(self.clone());
-    context.hooks.identifier.r#for(EXPORTS_INFO).tap(self);
+    context.hooks.identifier.for_static(EXPORTS_INFO).tap(self);
   }
 }

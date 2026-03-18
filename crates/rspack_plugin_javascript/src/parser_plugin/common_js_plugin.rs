@@ -108,14 +108,18 @@ impl JavascriptParserPlugin for CommonJsPlugin {
     context
       .hooks
       .evaluate_identifier
-      .r#for(expr_name::MODULE_HOT)
+      .for_static(expr_name::MODULE_HOT)
       .tap(self.clone());
     context
       .hooks
       .r#typeof
-      .r#for(expr_name::MODULE)
+      .for_static(expr_name::MODULE)
       .tap(self.clone());
-    context.hooks.member.r#for("module.id").tap(self.clone());
-    context.hooks.member.r#for("module.loaded").tap(self);
+    context
+      .hooks
+      .member
+      .for_static("module.id")
+      .tap(self.clone());
+    context.hooks.member.for_static("module.loaded").tap(self);
   }
 }

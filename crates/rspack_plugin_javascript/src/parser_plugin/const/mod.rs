@@ -218,11 +218,11 @@ impl JavascriptParserPlugin for ConstPlugin {
       .tap(self.clone());
     context.hooks.statement_if.tap(self.clone());
     for key in [RESOURCE_FRAGMENT, RESOURCE_QUERY] {
-      context.hooks.identifier.r#for(key).tap(self.clone());
+      context.hooks.identifier.for_static(key).tap(self.clone());
       context
         .hooks
         .evaluate_identifier
-        .r#for(key)
+        .for_static(key)
         .tap(self.clone());
     }
     context.hooks.unused_statement.tap(self);

@@ -1027,11 +1027,15 @@ impl JavascriptParserPlugin for RstestParserPlugin {
     context
       .hooks
       .call_member_chain
-      .r#for(ESM_SPECIFIER_TAG)
+      .for_static(ESM_SPECIFIER_TAG)
       .tap(tap.clone());
     if globals {
       for key in ["rs", "rstest"] {
-        context.hooks.call_member_chain.r#for(key).tap(tap.clone());
+        context
+          .hooks
+          .call_member_chain
+          .for_static(key)
+          .tap(tap.clone());
       }
     }
     if module_path_name {

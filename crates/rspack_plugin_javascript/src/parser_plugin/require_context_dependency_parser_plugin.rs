@@ -105,6 +105,6 @@ crate::impl_javascript_parser_hook!(
 
 impl JavascriptParserPlugin for RequireContextDependencyParserPlugin {
   fn apply(self: Arc<Self>, context: &mut JavascriptParserPluginContext<'_>) {
-    context.hooks.call.r#for("require.context").tap(self);
+    context.hooks.call.for_static("require.context").tap(self);
   }
 }

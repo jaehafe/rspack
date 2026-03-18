@@ -190,10 +190,14 @@ impl JavascriptParserPlugin for ESMDetectionParserPlugin {
     context.hooks.top_level_await_expr.tap(self.clone());
     context.hooks.top_level_for_of_await_stmt.tap(self.clone());
     for key in ["exports", "define"] {
-      context.hooks.evaluate_typeof.r#for(key).tap(self.clone());
-      context.hooks.r#typeof.r#for(key).tap(self.clone());
-      context.hooks.identifier.r#for(key).tap(self.clone());
-      context.hooks.call.r#for(key).tap(self.clone());
+      context
+        .hooks
+        .evaluate_typeof
+        .for_static(key)
+        .tap(self.clone());
+      context.hooks.r#typeof.for_static(key).tap(self.clone());
+      context.hooks.identifier.for_static(key).tap(self.clone());
+      context.hooks.call.for_static(key).tap(self.clone());
     }
   }
 }

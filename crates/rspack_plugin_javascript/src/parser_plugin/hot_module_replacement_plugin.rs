@@ -321,22 +321,22 @@ impl JavascriptParserPlugin for ModuleHotReplacementParserPlugin {
     context
       .hooks
       .evaluate_identifier
-      .r#for(expr_name::MODULE_HOT)
+      .for_static(expr_name::MODULE_HOT)
       .tap(self.clone());
     context
       .hooks
       .member
-      .r#for(expr_name::MODULE_HOT)
+      .for_static(expr_name::MODULE_HOT)
       .tap(self.clone());
     context
       .hooks
       .call
-      .r#for(expr_name::MODULE_HOT_ACCEPT)
+      .for_static(expr_name::MODULE_HOT_ACCEPT)
       .tap(self.clone());
     context
       .hooks
       .call
-      .r#for(expr_name::MODULE_HOT_DECLINE)
+      .for_static(expr_name::MODULE_HOT_DECLINE)
       .tap(self);
   }
 }
@@ -346,22 +346,22 @@ impl JavascriptParserPlugin for ImportMetaHotReplacementParserPlugin {
     context
       .hooks
       .evaluate_identifier
-      .r#for(expr_name::IMPORT_META_HOT)
+      .for_static(expr_name::IMPORT_META_HOT)
       .tap(self.clone());
     context
       .hooks
       .member
-      .r#for(expr_name::IMPORT_META_HOT)
+      .for_static(expr_name::IMPORT_META_HOT)
       .tap(self.clone());
     context
       .hooks
       .call
-      .r#for(expr_name::IMPORT_META_HOT_ACCEPT)
+      .for_static(expr_name::IMPORT_META_HOT_ACCEPT)
       .tap(self.clone());
     context
       .hooks
       .call
-      .r#for(expr_name::IMPORT_META_HOT_DECLINE)
+      .for_static(expr_name::IMPORT_META_HOT_DECLINE)
       .tap(self);
   }
 }

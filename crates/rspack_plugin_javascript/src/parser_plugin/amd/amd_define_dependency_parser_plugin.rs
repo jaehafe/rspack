@@ -628,7 +628,7 @@ crate::impl_javascript_parser_hook!(
 
 impl JavascriptParserPlugin for AMDDefineDependencyParserPlugin {
   fn apply(self: Arc<Self>, context: &mut JavascriptParserPluginContext<'_>) {
-    context.hooks.call.r#for("define").tap(self.clone());
+    context.hooks.call.for_static("define").tap(self.clone());
     context.hooks.finish.tap(self);
   }
 }

@@ -36,6 +36,6 @@ crate::impl_javascript_parser_hook!(
 
 impl JavascriptParserPlugin for ESMTopLevelThisParserPlugin {
   fn apply(self: Arc<Self>, context: &mut JavascriptParserPluginContext<'_>) {
-    context.hooks.this.r#for("this").tap(self);
+    context.hooks.this.for_static("this").tap(self);
   }
 }

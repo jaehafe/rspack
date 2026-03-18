@@ -49,8 +49,7 @@ use crate::{
   dependency::local_module::LocalModule,
   parser_and_generator::ParserRuntimeRequirementsData,
   parser_plugin::{
-    self, ImportsReferencesState, InnerGraphState, JavaScriptParserPluginDrive,
-    RequireReferencesState,
+    self, ImportsReferencesState, InnerGraphState, JavascriptParserHooks, RequireReferencesState,
   },
   utils::eval::{self, BasicEvaluatedExpression},
   visitors::{
@@ -361,7 +360,7 @@ pub struct JavascriptParser<'parser> {
   pub module_type: &'parser ModuleType,
   pub(crate) module_layer: Option<&'parser ModuleLayer>,
   pub module_identifier: &'parser ModuleIdentifier,
-  pub(crate) plugin_drive: Rc<JavaScriptParserPluginDrive>,
+  pub(crate) plugin_drive: Rc<JavascriptParserHooks>,
   // ===== states =======
   pub(crate) definitions_db: ScopeInfoDB,
   pub(super) definitions: ScopeInfoId,
@@ -523,7 +522,7 @@ impl<'parser> JavascriptParser<'parser> {
       )));
     }
 
-    let plugin_drive = Rc::new(JavaScriptParserPluginDrive::new(
+    let plugin_drive = Rc::new(JavascriptParserHooks::new(
       plugins,
       compiler_options,
       javascript_options,

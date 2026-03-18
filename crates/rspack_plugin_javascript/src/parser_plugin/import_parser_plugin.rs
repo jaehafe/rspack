@@ -635,17 +635,17 @@ impl JavascriptParserPlugin for ImportParserPlugin {
     context
       .hooks
       .identifier
-      .r#for(DYNAMIC_IMPORT_TAG)
+      .for_static(DYNAMIC_IMPORT_TAG)
       .tap(self.clone());
     context
       .hooks
       .member_chain
-      .r#for(DYNAMIC_IMPORT_TAG)
+      .for_static(DYNAMIC_IMPORT_TAG)
       .tap(self.clone());
     context
       .hooks
       .call_member_chain
-      .r#for(DYNAMIC_IMPORT_TAG)
+      .for_static(DYNAMIC_IMPORT_TAG)
       .tap(self.clone());
     context.hooks.import_call.tap(self.clone());
     context.hooks.finish.tap(self);

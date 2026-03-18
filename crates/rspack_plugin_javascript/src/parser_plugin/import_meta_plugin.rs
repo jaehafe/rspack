@@ -529,12 +529,12 @@ impl JavascriptParserPlugin for ImportMetaPlugin {
       .tap(self.clone());
     context.hooks.meta_property.tap(self.clone());
     for key in [expr_name::IMPORT_META_URL, expr_name::IMPORT_META_VERSION] {
-      context.hooks.member.r#for(key).tap(self.clone());
+      context.hooks.member.for_static(key).tap(self.clone());
     }
     context
       .hooks
       .call
-      .r#for(expr_name::IMPORT_META_RESOLVE)
+      .for_static(expr_name::IMPORT_META_RESOLVE)
       .tap(self.clone());
     context.hooks.unhandled_expression_member_chain.tap(self);
   }

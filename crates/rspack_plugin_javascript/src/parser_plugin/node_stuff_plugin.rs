@@ -922,29 +922,33 @@ impl JavascriptParserPlugin for NodeStuffPlugin {
   fn apply(self: Arc<Self>, context: &mut JavascriptParserPluginContext<'_>) {
     if self.handle_cjs {
       for key in [DIRNAME, FILENAME, GLOBAL] {
-        context.hooks.identifier.r#for(key).tap(self.clone());
+        context.hooks.identifier.for_static(key).tap(self.clone());
       }
-      context.hooks.rename.r#for(GLOBAL).tap(self.clone());
+      context.hooks.rename.for_static(GLOBAL).tap(self.clone());
       for key in [DIRNAME, FILENAME] {
-        context.hooks.r#typeof.r#for(key).tap(self.clone());
+        context.hooks.r#typeof.for_static(key).tap(self.clone());
         context
           .hooks
           .evaluate_identifier
-          .r#for(key)
+          .for_static(key)
           .tap(self.clone());
       }
     }
 
     if self.handle_esm {
       for key in [IMPORT_META_DIRNAME, IMPORT_META_FILENAME] {
-        context.hooks.r#typeof.r#for(key).tap(self.clone());
-        context.hooks.evaluate_typeof.r#for(key).tap(self.clone());
+        context.hooks.r#typeof.for_static(key).tap(self.clone());
+        context
+          .hooks
+          .evaluate_typeof
+          .for_static(key)
+          .tap(self.clone());
         context
           .hooks
           .evaluate_identifier
-          .r#for(key)
+          .for_static(key)
           .tap(self.clone());
-        context.hooks.member.r#for(key).tap(self.clone());
+        context.hooks.member.for_static(key).tap(self.clone());
       }
       context
         .hooks

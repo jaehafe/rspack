@@ -88,8 +88,8 @@ impl JavascriptParserPlugin for RslibParserPlugin {
       "require.include",
       "require.onError",
     ] {
-      context.hooks.member.r#for(key).tap(tap.clone());
+      context.hooks.member.for_static(key).tap(tap.clone());
     }
-    context.hooks.r#typeof.r#for("module").tap(tap);
+    context.hooks.r#typeof.for_static("module").tap(tap);
   }
 }

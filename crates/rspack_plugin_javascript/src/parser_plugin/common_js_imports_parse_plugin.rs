@@ -1130,45 +1130,49 @@ impl JavascriptParserPlugin for CommonJsImportsParserPlugin {
     context
       .hooks
       .identifier
-      .r#for(COMMONJS_REQUIRE_TAG)
+      .for_static(COMMONJS_REQUIRE_TAG)
       .tap(self.clone());
     context
       .hooks
       .identifier
-      .r#for(expr_name::REQUIRE)
+      .for_static(expr_name::REQUIRE)
       .tap(self.clone());
     context
       .hooks
       .member_chain
-      .r#for(COMMONJS_REQUIRE_TAG)
+      .for_static(COMMONJS_REQUIRE_TAG)
       .tap(self.clone());
     context
       .hooks
       .call_member_chain
-      .r#for(COMMONJS_REQUIRE_TAG)
+      .for_static(COMMONJS_REQUIRE_TAG)
       .tap(self.clone());
     context
       .hooks
       .can_rename
-      .r#for(expr_name::REQUIRE)
+      .for_static(expr_name::REQUIRE)
       .tap(self.clone());
     context
       .hooks
       .rename
-      .r#for(expr_name::REQUIRE)
+      .for_static(expr_name::REQUIRE)
       .tap(self.clone());
     for key in [
       expr_name::REQUIRE,
       expr_name::REQUIRE_RESOLVE,
       expr_name::REQUIRE_RESOLVE_WEAK,
     ] {
-      context.hooks.evaluate_typeof.r#for(key).tap(self.clone());
+      context
+        .hooks
+        .evaluate_typeof
+        .for_static(key)
+        .tap(self.clone());
       context
         .hooks
         .evaluate_identifier
-        .r#for(key)
+        .for_static(key)
         .tap(self.clone());
-      context.hooks.r#typeof.r#for(key).tap(self.clone());
+      context.hooks.r#typeof.for_static(key).tap(self.clone());
     }
     for key in [
       expr_name::REQUIRE,
@@ -1176,25 +1180,29 @@ impl JavascriptParserPlugin for CommonJsImportsParserPlugin {
       expr_name::REQUIRE_RESOLVE,
       expr_name::REQUIRE_RESOLVE_WEAK,
     ] {
-      context.hooks.call.r#for(key).tap(self.clone());
+      context.hooks.call.for_static(key).tap(self.clone());
     }
     for key in [expr_name::REQUIRE, expr_name::MODULE_REQUIRE] {
-      context.hooks.new_expression.r#for(key).tap(self.clone());
+      context
+        .hooks
+        .new_expression
+        .for_static(key)
+        .tap(self.clone());
       context
         .hooks
         .member_chain_of_call_member_chain
-        .r#for(key)
+        .for_static(key)
         .tap(self.clone());
       context
         .hooks
         .call_member_chain_of_call_member_chain
-        .r#for(key)
+        .for_static(key)
         .tap(self.clone());
     }
     context
       .hooks
       .assign
-      .r#for(expr_name::REQUIRE)
+      .for_static(expr_name::REQUIRE)
       .tap(self.clone());
     context.hooks.finish.tap(self);
   }

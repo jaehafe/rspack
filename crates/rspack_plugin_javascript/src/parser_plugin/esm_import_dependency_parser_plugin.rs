@@ -435,17 +435,17 @@ impl JavascriptParserPlugin for ESMImportDependencyParserPlugin {
     context
       .hooks
       .identifier
-      .r#for(ESM_SPECIFIER_TAG)
+      .for_static(ESM_SPECIFIER_TAG)
       .tap(self.clone());
     context
       .hooks
       .call_member_chain
-      .r#for(ESM_SPECIFIER_TAG)
+      .for_static(ESM_SPECIFIER_TAG)
       .tap(self.clone());
     context
       .hooks
       .member_chain
-      .r#for(ESM_SPECIFIER_TAG)
+      .for_static(ESM_SPECIFIER_TAG)
       .tap(self);
   }
 }

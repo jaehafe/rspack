@@ -250,7 +250,7 @@ crate::impl_javascript_parser_hook!(
 impl JavascriptParserPlugin for AMDParserPlugin {
   fn apply(self: Arc<Self>, context: &mut JavascriptParserPluginContext<'_>) {
     for key in ["require.config", "requirejs.config"] {
-      context.hooks.call.r#for(key).tap(self.clone());
+      context.hooks.call.for_static(key).tap(self.clone());
     }
     for key in [
       "require.version",
@@ -258,21 +258,33 @@ impl JavascriptParserPlugin for AMDParserPlugin {
       DEFINE_AMD,
       REQUIRE_AMD,
     ] {
-      context.hooks.member.r#for(key).tap(self.clone());
+      context.hooks.member.for_static(key).tap(self.clone());
     }
     for key in [DEFINE, REQUIRE, DEFINE_AMD, REQUIRE_AMD] {
-      context.hooks.r#typeof.r#for(key).tap(self.clone());
-      context.hooks.evaluate_typeof.r#for(key).tap(self.clone());
+      context.hooks.r#typeof.for_static(key).tap(self.clone());
+      context
+        .hooks
+        .evaluate_typeof
+        .for_static(key)
+        .tap(self.clone());
     }
-    context.hooks.identifier.r#for(DEFINE).tap(self.clone());
+    context
+      .hooks
+      .identifier
+      .for_static(DEFINE)
+      .tap(self.clone());
     for key in [DEFINE_AMD, REQUIRE_AMD] {
       context
         .hooks
         .evaluate_identifier
-        .r#for(key)
+        .for_static(key)
         .tap(self.clone());
     }
-    context.hooks.can_rename.r#for(DEFINE).tap(self.clone());
-    context.hooks.rename.r#for(DEFINE).tap(self);
+    context
+      .hooks
+      .can_rename
+      .for_static(DEFINE)
+      .tap(self.clone());
+    context.hooks.rename.for_static(DEFINE).tap(self);
   }
 }

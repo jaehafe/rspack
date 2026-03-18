@@ -65,7 +65,7 @@ crate::impl_javascript_parser_hook!(
 
 impl JavascriptParserPlugin for IsIncludedPlugin {
   fn apply(self: Arc<Self>, context: &mut JavascriptParserPluginContext<'_>) {
-    context.hooks.call.r#for(IS_INCLUDED).tap(self.clone());
-    context.hooks.r#typeof.r#for(IS_INCLUDED).tap(self);
+    context.hooks.call.for_static(IS_INCLUDED).tap(self.clone());
+    context.hooks.r#typeof.for_static(IS_INCLUDED).tap(self);
   }
 }

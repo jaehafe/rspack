@@ -967,18 +967,18 @@ impl JavascriptParserPlugin for InnerGraphPlugin {
     context
       .hooks
       .member
-      .r#for(TOP_LEVEL_SYMBOL)
+      .for_static(TOP_LEVEL_SYMBOL)
       .tap(self.clone());
     context
       .hooks
       .assign
-      .r#for(TOP_LEVEL_SYMBOL)
+      .for_static(TOP_LEVEL_SYMBOL)
       .tap(self.clone());
     context
       .hooks
       .identifier
-      .r#for(TOP_LEVEL_SYMBOL)
+      .for_static(TOP_LEVEL_SYMBOL)
       .tap(self.clone());
-    context.hooks.this.r#for(TOP_LEVEL_SYMBOL).tap(self);
+    context.hooks.this.for_static(TOP_LEVEL_SYMBOL).tap(self);
   }
 }

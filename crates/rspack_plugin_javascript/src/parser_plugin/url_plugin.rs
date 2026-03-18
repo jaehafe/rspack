@@ -249,8 +249,12 @@ crate::impl_javascript_parser_hook!(
 
 impl JavascriptParserPlugin for URLPlugin {
   fn apply(self: Arc<Self>, context: &mut JavascriptParserPluginContext<'_>) {
-    context.hooks.can_rename.r#for("URL").tap(self.clone());
-    context.hooks.new_expression.r#for("URL").tap(self.clone());
+    context.hooks.can_rename.for_static("URL").tap(self.clone());
+    context
+      .hooks
+      .new_expression
+      .for_static("URL")
+      .tap(self.clone());
     context.hooks.is_pure.tap(self);
   }
 }

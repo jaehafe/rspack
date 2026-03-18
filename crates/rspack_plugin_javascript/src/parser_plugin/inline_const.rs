@@ -136,7 +136,7 @@ impl JavascriptParserPlugin for InlineConstPlugin {
     context
       .hooks
       .evaluate_identifier
-      .r#for(INLINABLE_CONST_TAG)
+      .for_static(INLINABLE_CONST_TAG)
       .tap(self.clone());
     context.hooks.pre_declarator.tap(self);
   }

@@ -72,7 +72,7 @@ crate::impl_javascript_parser_hook!(
 
 impl JavascriptParserPlugin for JavascriptMetaInfoPlugin {
   fn apply(self: Arc<Self>, context: &mut JavascriptParserPluginContext<'_>) {
-    context.hooks.call.r#for("eval").tap(self.clone());
+    context.hooks.call.for_static("eval").tap(self.clone());
     context.hooks.finish.tap(self);
   }
 }

@@ -647,21 +647,29 @@ impl JavascriptParserPlugin for CommonJsExportsParserPlugin {
       context
         .hooks
         .assign_member_chain
-        .r#for(key)
+        .for_static(key)
         .tap(self.clone());
-      context.hooks.member_chain.r#for(key).tap(self.clone());
-      context.hooks.call_member_chain.r#for(key).tap(self.clone());
+      context.hooks.member_chain.for_static(key).tap(self.clone());
+      context
+        .hooks
+        .call_member_chain
+        .for_static(key)
+        .tap(self.clone());
     }
     context
       .hooks
       .call
-      .r#for("Object.defineProperty")
+      .for_static("Object.defineProperty")
       .tap(self.clone());
     for key in ["module", "exports"] {
-      context.hooks.identifier.r#for(key).tap(self.clone());
-      context.hooks.evaluate_typeof.r#for(key).tap(self.clone());
+      context.hooks.identifier.for_static(key).tap(self.clone());
+      context
+        .hooks
+        .evaluate_typeof
+        .for_static(key)
+        .tap(self.clone());
     }
-    context.hooks.this.r#for("this").tap(self.clone());
-    context.hooks.member.r#for("module.exports").tap(self);
+    context.hooks.this.for_static("this").tap(self.clone());
+    context.hooks.member.for_static("module.exports").tap(self);
   }
 }

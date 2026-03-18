@@ -520,7 +520,7 @@ impl JavascriptParserPlugin for APIPlugin {
     context
       .hooks
       .evaluate_identifier
-      .r#for(API_LAYER)
+      .for_static(API_LAYER)
       .tap(self.clone());
 
     for key in [
@@ -535,7 +535,7 @@ impl JavascriptParserPlugin for APIPlugin {
       "require.main",
       "__webpack_module__.id",
     ] {
-      context.hooks.member.r#for(key).tap(self.clone());
+      context.hooks.member.for_static(key).tap(self.clone());
     }
 
     for key in [
@@ -545,7 +545,7 @@ impl JavascriptParserPlugin for APIPlugin {
       "require.main.require",
       "module.parent.require",
     ] {
-      context.hooks.call.r#for(key).tap(self.clone());
+      context.hooks.call.for_static(key).tap(self.clone());
     }
   }
 }

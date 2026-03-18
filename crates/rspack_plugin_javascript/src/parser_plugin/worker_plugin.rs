@@ -565,12 +565,12 @@ impl JavascriptParserPlugin for WorkerPlugin {
     context
       .hooks
       .call_member_chain
-      .r#for(WORKER_SPECIFIER_TAG)
+      .for_static(WORKER_SPECIFIER_TAG)
       .tap(self.clone());
     context
       .hooks
       .call
-      .r#for(ESM_SPECIFIER_TAG)
+      .for_static(ESM_SPECIFIER_TAG)
       .tap(self.clone());
     for key in &self.call_syntax {
       context.hooks.call.r#for(key.as_str()).tap(self.clone());
@@ -578,7 +578,7 @@ impl JavascriptParserPlugin for WorkerPlugin {
     context
       .hooks
       .new_expression
-      .r#for(ESM_SPECIFIER_TAG)
+      .for_static(ESM_SPECIFIER_TAG)
       .tap(self.clone());
     for key in &self.new_syntax {
       context

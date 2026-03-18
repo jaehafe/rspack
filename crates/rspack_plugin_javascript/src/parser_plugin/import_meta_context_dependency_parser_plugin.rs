@@ -176,12 +176,12 @@ impl JavascriptParserPlugin for ImportMetaContextDependencyParserPlugin {
     context
       .hooks
       .evaluate_identifier
-      .r#for(expr_name::IMPORT_META_CONTEXT)
+      .for_static(expr_name::IMPORT_META_CONTEXT)
       .tap(self.clone());
     context
       .hooks
       .call
-      .r#for(expr_name::IMPORT_META_CONTEXT)
+      .for_static(expr_name::IMPORT_META_CONTEXT)
       .tap(self);
   }
 }

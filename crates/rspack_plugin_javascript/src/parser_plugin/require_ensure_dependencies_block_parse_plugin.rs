@@ -201,14 +201,14 @@ impl JavascriptParserPlugin for RequireEnsureDependenciesBlockParserPlugin {
     context
       .hooks
       .evaluate_typeof
-      .r#for("require.ensure")
+      .for_static("require.ensure")
       .tap(self.clone());
     context
       .hooks
       .r#typeof
-      .r#for("require.ensure")
+      .for_static("require.ensure")
       .tap(self.clone());
-    context.hooks.call.r#for("require.ensure").tap(self);
+    context.hooks.call.for_static("require.ensure").tap(self);
   }
 }
 

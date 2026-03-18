@@ -321,8 +321,8 @@ impl JavascriptParserPlugin for CompatibilityPlugin {
     context
       .hooks
       .identifier
-      .r#for(NESTED_IDENTIFIER_TAG)
+      .for_static(NESTED_IDENTIFIER_TAG)
       .tap(self.clone());
-    context.hooks.call.r#for(expr_name::REQUIRE).tap(self);
+    context.hooks.call.for_static(expr_name::REQUIRE).tap(self);
   }
 }
