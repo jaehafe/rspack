@@ -360,7 +360,7 @@ pub struct JavascriptParser<'parser> {
   pub module_type: &'parser ModuleType,
   pub(crate) module_layer: Option<&'parser ModuleLayer>,
   pub module_identifier: &'parser ModuleIdentifier,
-  pub(crate) plugin_drive: Rc<JavascriptParserHooks>,
+  pub(crate) plugin_drive: Arc<JavascriptParserHooks>,
   // ===== states =======
   pub(crate) definitions_db: ScopeInfoDB,
   pub(super) definitions: ScopeInfoId,
@@ -522,7 +522,7 @@ impl<'parser> JavascriptParser<'parser> {
       )));
     }
 
-    let plugin_drive = Rc::new(JavascriptParserHooks::new(
+    let plugin_drive = JavascriptParserHooks::new(
       plugins,
       compiler_options,
       javascript_options,
@@ -530,7 +530,7 @@ impl<'parser> JavascriptParser<'parser> {
       module_type,
       module_layer,
       resource_data,
-    ));
+    );
     let mut db = ScopeInfoDB::new();
 
     Self {
