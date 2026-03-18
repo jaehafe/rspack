@@ -7,7 +7,7 @@ use std::sync::Arc;
 use parser::DefineParserPlugin;
 use rspack_core::{
   Compilation, CompilationParams, CompilerCompilation, ModuleType, NormalModuleFactoryParser,
-  ParserAndGenerator, ParserOptions, Plugin,
+  Parser, ParserOptions, Plugin,
 };
 use rspack_error::{Diagnostic, Error, Result};
 use rspack_hook::{plugin, plugin_hook};
@@ -15,7 +15,7 @@ use rustc_hash::FxHashMap;
 use serde_json::Value;
 
 use self::walk_data::WalkData;
-use crate::parser_and_generator::JavaScriptParserAndGenerator;
+use crate::parser_and_generator::JavaScriptParser;
 
 const VALUE_DEP_PREFIX: &str = "rspack/DefinePlugin ";
 
@@ -75,11 +75,11 @@ async fn compilation(
 async fn nmf_parser(
   &self,
   module_type: &ModuleType,
-  parser: &mut Box<dyn ParserAndGenerator>,
+  parser: &mut Box<dyn Parser>,
   _parser_options: Option<&ParserOptions>,
 ) -> Result<()> {
   if module_type.is_js_like()
-    && let Some(parser) = parser.downcast_mut::<JavaScriptParserAndGenerator>()
+    && let Some(parser) = parser.downcast_mut::<JavaScriptParser>()
   {
     parser.add_parser_plugin(Arc::new(DefineParserPlugin::new(self.walk_data.clone())));
   }

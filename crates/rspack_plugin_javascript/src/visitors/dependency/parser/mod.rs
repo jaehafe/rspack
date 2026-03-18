@@ -405,7 +405,7 @@ impl<'parser> JavascriptParser<'parser> {
     build_info: &'parser mut BuildInfo,
     semicolons: &'parser mut FxHashSet<BytePos>,
     unresolved_mark: Mark,
-    parser_plugins: &'parser mut Vec<BoxJavascriptParserPlugin>,
+    parser_plugins: &'parser [BoxJavascriptParserPlugin],
     parse_meta: ParseMeta,
     parser_runtime_requirements: &'parser ParserRuntimeRequirementsData,
   ) -> Self {
@@ -422,7 +422,7 @@ impl<'parser> JavascriptParser<'parser> {
       parser_runtime_requirements,
     };
 
-    for plugin in parser_plugins.drain(..) {
+    for plugin in parser_plugins.iter().cloned() {
       plugin.apply(&mut context);
     }
 

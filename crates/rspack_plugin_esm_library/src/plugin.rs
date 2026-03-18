@@ -19,7 +19,7 @@ use rspack_core::{
   ConcatenatedModuleInfo, ConcatenationScope, DependencyType, ExportsInfoArtifact,
   ExternalModuleInfo, GetTargetResult, Logger, ModuleFactoryCreateData, ModuleGraph,
   ModuleIdentifier, ModuleInfo, ModuleType, NormalModuleFactoryAfterFactorize,
-  NormalModuleFactoryParser, ParserAndGenerator, ParserOptions, Plugin, PrefetchExportsInfoMode,
+  NormalModuleFactoryParser, Parser, ParserOptions, Plugin, PrefetchExportsInfoMode,
   REQUIRE_SCOPE_GLOBALS, RuntimeCodeTemplate, RuntimeGlobals, RuntimeModule,
   SideEffectsOptimizeArtifact, get_target, is_esm_dep_like,
   rspack_sources::{ReplaceSource, Source},
@@ -28,7 +28,7 @@ use rspack_error::{Diagnostic, Result};
 use rspack_hook::{plugin, plugin_hook};
 use rspack_plugin_javascript::{
   JavascriptModulesRenderChunkContent, JsPlugin, RenderSource,
-  dependency::ImportDependencyTemplate, parser_and_generator::JavaScriptParserAndGenerator,
+  dependency::ImportDependencyTemplate, parser_and_generator::JavaScriptParser,
 };
 use rspack_plugin_split_chunks::CacheGroup;
 use rspack_util::{
@@ -727,11 +727,11 @@ async fn optimize_runtime_chunk_hook(&self, compilation: &mut Compilation) -> Re
 async fn parse(
   &self,
   module_type: &ModuleType,
-  parser: &mut Box<dyn ParserAndGenerator>,
+  parser: &mut Box<dyn Parser>,
   _parser_options: Option<&ParserOptions>,
 ) -> Result<()> {
   if module_type.is_js_like()
-    && let Some(parser) = parser.downcast_mut::<JavaScriptParserAndGenerator>()
+    && let Some(parser) = parser.downcast_mut::<JavaScriptParser>()
   {
     parser.add_parser_plugin(Arc::new(EsmLibParserPlugin {}));
   }

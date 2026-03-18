@@ -9,7 +9,7 @@ use rspack_core::{
   AsyncDependenciesBlockIdentifier, BuildMetaExportsType, COLLECTED_TYPESCRIPT_INFO_PARSE_META_KEY,
   ChunkGraph, CollectedTypeScriptInfo, Compilation, DependenciesBlock, DependencyId,
   GenerateContext, Module, ModuleCodeTemplate, ModuleGraph, ModuleType, ParseContext, ParseResult,
-  ParserAndGenerator, RuntimeGlobals, SideEffectsBailoutItem, SourceType, TemplateContext,
+  Generator, Parser, RuntimeGlobals, SideEffectsBailoutItem, SourceType, TemplateContext,
   TemplateReplaceSource,
   diagnostics::map_box_diagnostics_to_module_parse_diagnostics,
   remove_bom, render_init_fragments,
@@ -74,25 +74,31 @@ impl ParserRuntimeRequirementsData {
 
 #[cacheable]
 #[derive(Default)]
-pub struct JavaScriptParserAndGenerator {
+pub struct JavaScriptParser {
   // TODO
   #[cacheable(with=Skip)]
   parser_plugins: Vec<BoxJavascriptParserPlugin>,
 }
 
-impl std::fmt::Debug for JavaScriptParserAndGenerator {
+impl std::fmt::Debug for JavaScriptParser {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.debug_struct("JavaScriptParserAndGenerator")
+    f.debug_struct("JavaScriptParser")
       .field("parser_plugins", &"...")
       .finish()
   }
 }
 
-impl JavaScriptParserAndGenerator {
+impl JavaScriptParser {
   pub fn add_parser_plugin(&mut self, parser_plugin: BoxJavascriptParserPlugin) {
     self.parser_plugins.push(parser_plugin);
   }
+}
 
+#[cacheable]
+#[derive(Debug, Default)]
+pub struct JavaScriptGenerator;
+
+impl JavaScriptGenerator {
   fn source_block(
     &self,
     compilation: &Compilation,
@@ -145,20 +151,12 @@ static SOURCE_TYPES: &[SourceType; 1] = &[SourceType::JavaScript];
 
 #[cacheable_dyn]
 #[async_trait::async_trait]
-impl ParserAndGenerator for JavaScriptParserAndGenerator {
-  fn source_types(&self, _module: &dyn Module, _module_graph: &ModuleGraph) -> &[SourceType] {
-    SOURCE_TYPES
-  }
-
-  fn size(&self, module: &dyn Module, _source_type: Option<&SourceType>) -> f64 {
-    module.source().map_or(0, |source| source.size()) as f64
-  }
-
+impl Parser for JavaScriptParser {
   #[tracing::instrument("JavaScriptParser:parse", skip_all,fields(
     resource = parse_context.resource_data.resource()
   ))]
   async fn parse<'a>(
-    &mut self,
+    &self,
     parse_context: ParseContext<'a>,
   ) -> Result<TWithDiagnosticArray<ParseResult>> {
     let ParseContext {
@@ -194,6 +192,7 @@ impl ParserAndGenerator for JavaScriptParserAndGenerator {
           blocks: vec![],
           presentational_dependencies: vec![],
           code_generation_dependencies: vec![],
+          parser_data: None,
           side_effects_bailout: None,
         }
         .with_diagnostic(map_box_diagnostics_to_module_parse_diagnostics(
@@ -289,7 +288,7 @@ impl ParserAndGenerator for JavaScriptParserAndGenerator {
         module_parser_options,
         &mut semicolons,
         unresolved_mark,
-        &mut self.parser_plugins,
+        &self.parser_plugins,
         parse_meta,
         &parser_runtime_requirements,
       )
@@ -318,6 +317,7 @@ impl ParserAndGenerator for JavaScriptParserAndGenerator {
         blocks,
         presentational_dependencies,
         code_generation_dependencies: vec![],
+        parser_data: None,
         side_effects_bailout,
       }
       .with_diagnostic(map_box_diagnostics_to_module_parse_diagnostics(
@@ -325,6 +325,19 @@ impl ParserAndGenerator for JavaScriptParserAndGenerator {
         loaders,
       )),
     )
+  }
+
+}
+
+#[cacheable_dyn]
+#[async_trait::async_trait]
+impl Generator for JavaScriptGenerator {
+  fn source_types(&self, _module: &dyn Module, _module_graph: &ModuleGraph) -> &[SourceType] {
+    SOURCE_TYPES
+  }
+
+  fn size(&self, module: &dyn Module, _source_type: Option<&SourceType>) -> f64 {
+    module.source().map_or(0, |source| source.size()) as f64
   }
 
   async fn generate(

@@ -2,13 +2,13 @@ use std::fmt::Debug;
 
 use rspack_core::{
   ChunkGraph, ChunkUkey, Compilation, CompilationParams, CompilationRenderManifest,
-  CompilerCompilation, DependencyType, ManifestAssetType, ModuleType, ParserAndGenerator, PathData,
-  Plugin, RenderManifestEntry, SourceType,
+  CompilerCompilation, DependencyType, Generator, ManifestAssetType, ModuleType, Parser,
+  PathData, Plugin, RenderManifestEntry, SourceType,
 };
 use rspack_error::{Diagnostic, Result};
 use rspack_hook::{plugin, plugin_hook};
 
-use crate::parser_and_generator::AsyncWasmParserAndGenerator;
+use crate::parser_and_generator::{AsyncWasmGenerator, AsyncWasmParser};
 
 #[plugin]
 #[derive(Debug, Default)]
@@ -99,9 +99,13 @@ impl Plugin for AsyncWasmPlugin {
       .render_manifest
       .tap(render_manifest::new(self));
 
-    ctx.register_parser_and_generator_builder(
+    ctx.register_parser_builder(
       ModuleType::WasmAsync,
-      Box::new(move |_, _| Box::new(AsyncWasmParserAndGenerator) as Box<dyn ParserAndGenerator>),
+      Box::new(move |_| Box::new(AsyncWasmParser) as Box<dyn Parser>),
+    );
+    ctx.register_generator_builder(
+      ModuleType::WasmAsync,
+      Box::new(move |_| Box::new(AsyncWasmGenerator) as Box<dyn Generator>),
     );
 
     Ok(())

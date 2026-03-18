@@ -8,7 +8,7 @@ use rspack_collections::IdentifierSet;
 use rspack_core::{
   Compilation, CompilationOptimizeDependencies, CompilationParams, CompilationProcessAssets,
   CompilerCompilation, DependencyType, ExportsInfoArtifact, FactoryMeta, ModuleType,
-  NormalModuleFactoryParser, ParserAndGenerator, ParserOptions, Plugin,
+  NormalModuleFactoryParser, Parser, ParserOptions, Plugin,
   SideEffectsOptimizeArtifact,
   build_module_graph::BuildModuleGraphArtifact,
   rspack_sources::{BoxSource, ReplaceSource, SourceExt},
@@ -16,7 +16,7 @@ use rspack_core::{
 use rspack_error::{Diagnostic, Result};
 use rspack_hook::{plugin, plugin_hook};
 use rspack_plugin_javascript::{
-  BoxJavascriptParserPlugin, parser_and_generator::JavaScriptParserAndGenerator,
+  BoxJavascriptParserPlugin, parser_and_generator::JavaScriptParser,
 };
 use rustc_hash::FxHashMap as HashMap;
 
@@ -109,11 +109,11 @@ impl RstestPlugin {
 async fn nmf_parser(
   &self,
   module_type: &ModuleType,
-  parser: &mut Box<dyn ParserAndGenerator>,
+  parser: &mut Box<dyn Parser>,
   _parser_options: Option<&ParserOptions>,
 ) -> Result<()> {
   if module_type.is_js_like()
-    && let Some(parser) = parser.downcast_mut::<JavaScriptParserAndGenerator>()
+    && let Some(parser) = parser.downcast_mut::<JavaScriptParser>()
   {
     parser.add_parser_plugin(Arc::new(RstestParserPlugin::new(
       crate::parser_plugin::RstestParserPluginOptions {

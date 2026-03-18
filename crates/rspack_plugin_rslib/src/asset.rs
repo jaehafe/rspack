@@ -2,21 +2,21 @@ use std::borrow::Cow;
 
 use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_core::{
-  ChunkGraph, Compilation, GenerateContext, Module, ModuleGraph, NormalModule, ParseContext,
-  ParseResult, ParserAndGenerator, RuntimeSpec, SourceType, rspack_sources::BoxSource,
+  ChunkGraph, Compilation, GenerateContext, Generator, Module, ModuleGraph, NormalModule,
+  RuntimeSpec, SourceType, rspack_sources::BoxSource,
 };
-use rspack_error::{Result, TWithDiagnosticArray};
+use rspack_error::Result;
 use rspack_hash::RspackHashDigest;
-use rspack_plugin_asset::AssetParserAndGenerator;
+use rspack_plugin_asset::{AssetGenerator, AssetParserData};
 use rustc_hash::FxHashSet;
 
 #[cacheable]
-#[derive(Debug)]
-pub(crate) struct RslibAssetParserAndGenerator(pub AssetParserAndGenerator);
+#[derive(Debug, Clone)]
+pub(crate) struct RslibAssetGenerator(pub AssetGenerator);
 
 #[cacheable_dyn]
 #[async_trait::async_trait]
-impl ParserAndGenerator for RslibAssetParserAndGenerator {
+impl Generator for RslibAssetGenerator {
   fn source_types(&self, module: &dyn Module, module_graph: &ModuleGraph) -> &[SourceType] {
     let mut source_types = FxHashSet::default();
     let module_id = module.identifier();
@@ -30,25 +30,19 @@ impl ParserAndGenerator for RslibAssetParserAndGenerator {
       }
     }
 
-    // entry resource
     if source_types.is_empty()
-      && self
-        .0
-        .parsed_asset_config
-        .as_ref()
-        .is_some_and(|config| !config.is_inline() && !config.is_source())
+      && module
+        .as_normal_module()
+        .and_then(|module| module.parser_data())
+        .and_then(|data| data.downcast_ref::<AssetParserData>())
+        .is_some_and(|data| {
+          !data.parsed_asset_config.is_inline() && !data.parsed_asset_config.is_source()
+        })
     {
       return &[SourceType::JavaScript, SourceType::Asset];
     }
 
     self.0.source_types(module, module_graph)
-  }
-
-  async fn parse<'a>(
-    &mut self,
-    parse_context: ParseContext<'a>,
-  ) -> Result<TWithDiagnosticArray<ParseResult>> {
-    self.0.parse(parse_context).await
   }
 
   fn size(&self, module: &dyn Module, source_type: Option<&SourceType>) -> f64 {

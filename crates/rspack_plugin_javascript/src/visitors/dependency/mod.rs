@@ -47,7 +47,7 @@ pub fn scan_dependencies(
   module_parser_options: Option<&ParserOptions>,
   semicolons: &mut FxHashSet<BytePos>,
   unresolved_mark: Mark,
-  parser_plugins: &mut Vec<BoxJavascriptParserPlugin>,
+  parser_plugins: &[BoxJavascriptParserPlugin],
   parse_meta: ParseMeta,
   parser_runtime_requirements: &ParserRuntimeRequirementsData,
 ) -> Result<ScanDependenciesResult, Vec<Diagnostic>> {

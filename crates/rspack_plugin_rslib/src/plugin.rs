@@ -6,22 +6,22 @@ use std::{
 use rspack_core::{
   AssetEmittedInfo, BuildModuleGraphArtifact, ChunkUkey, Compilation,
   CompilationOptimizeDependencies, CompilationParams, CompilerAssetEmitted, CompilerCompilation,
-  DependencyType, ExportsInfoArtifact, ModuleType, NormalModuleFactoryParser, ParserAndGenerator,
-  ParserOptions, Plugin, RuntimeCodeTemplate, SideEffectsOptimizeArtifact, get_module_directives,
-  get_module_hashbang,
+  DependencyType, ExportsInfoArtifact, Generator, ModuleType, NormalModuleFactoryGenerator,
+  NormalModuleFactoryParser, Parser, ParserOptions, Plugin, RuntimeCodeTemplate,
+  SideEffectsOptimizeArtifact, get_module_directives, get_module_hashbang,
   rspack_sources::{ConcatSource, RawStringSource, Source, SourceExt},
 };
 use rspack_error::{Diagnostic, Result};
 use rspack_hook::{plugin, plugin_hook};
-use rspack_plugin_asset::AssetParserAndGenerator;
+use rspack_plugin_asset::AssetGenerator;
 use rspack_plugin_externals::esm_node_target_plugin;
 use rspack_plugin_javascript::{
   BoxJavascriptParserPlugin, JavascriptModulesRender, JsPlugin, RenderSource,
-  parser_and_generator::JavaScriptParserAndGenerator,
+  parser_and_generator::JavaScriptParser,
 };
 
 use crate::{
-  asset::RslibAssetParserAndGenerator,
+  asset::RslibAssetGenerator,
   dyn_import_external::{
     ExportImportedDependencyTemplate, ImportDependencyTemplate, cutout_dyn_import_externals,
     cutout_star_re_export_externals,
@@ -61,10 +61,10 @@ impl RslibPlugin {
 async fn nmf_parser(
   &self,
   module_type: &ModuleType,
-  parser: &mut Box<dyn ParserAndGenerator>,
+  parser: &mut Box<dyn Parser>,
   _parser_options: Option<&ParserOptions>,
 ) -> Result<()> {
-  if let Some(parser) = parser.downcast_mut::<JavaScriptParserAndGenerator>() {
+  if let Some(parser) = parser.downcast_mut::<JavaScriptParser>() {
     if module_type.is_js_like() {
       parser.add_parser_plugin(Arc::new(HashbangParserPlugin) as BoxJavascriptParserPlugin);
       parser.add_parser_plugin(Arc::new(ReactDirectivesParserPlugin) as BoxJavascriptParserPlugin);
@@ -81,14 +81,25 @@ async fn nmf_parser(
         rspack_plugin_javascript::node_stuff_plugin::NodeStuffPlugin::new(true, false),
       ) as BoxJavascriptParserPlugin);
     }
-  } else if parser.is::<AssetParserAndGenerator>() {
-    // Wrap AssetParserAndGenerator to customize source types
-    *parser = Box::new(RslibAssetParserAndGenerator(
-      parser
-        .downcast_ref::<AssetParserAndGenerator>()
-        .expect("is AssetParser")
+  }
+
+  Ok(())
+}
+
+#[plugin_hook(NormalModuleFactoryGenerator for RslibPlugin)]
+async fn nmf_generator(
+  &self,
+  _module_type: &ModuleType,
+  generator: &mut Box<dyn Generator>,
+  _generator_options: Option<&rspack_core::GeneratorOptions>,
+) -> Result<()> {
+  if generator.is::<AssetGenerator>() {
+    *generator = Box::new(RslibAssetGenerator(
+      generator
+        .downcast_ref::<AssetGenerator>()
+        .expect("is AssetGenerator")
         .clone(),
-    ))
+    ));
   }
 
   Ok(())
@@ -241,6 +252,10 @@ impl Plugin for RslibPlugin {
       .normal_module_factory_hooks
       .parser
       .tap(nmf_parser::new(self));
+    ctx
+      .normal_module_factory_hooks
+      .generator
+      .tap(nmf_generator::new(self));
 
     ctx
       .compilation_hooks

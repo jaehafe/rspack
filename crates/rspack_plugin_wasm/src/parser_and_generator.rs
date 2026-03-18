@@ -4,21 +4,25 @@ use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::IdentifierIndexMap;
 use rspack_core::{
   BoxDependency, BuildMetaExportsType, Dependency, DependencyId, DependencyType, ExportsArgument,
-  GenerateContext, ImportPhase, Module, ModuleArgument, ModuleDependency, ModuleGraph,
-  ModuleInitFragments, ParseContext, ParseResult, ParserAndGenerator, RuntimeGlobals, SourceType,
-  StaticExportsDependency, StaticExportsSpec,
+  GenerateContext, Generator, ImportPhase, Module, ModuleArgument, ModuleDependency,
+  ModuleGraph, ModuleInitFragments, ParseContext, ParseResult, Parser, RuntimeGlobals,
+  SourceType, StaticExportsDependency, StaticExportsSpec,
   rspack_sources::{BoxSource, RawStringSource, Source, SourceExt},
 };
 use rspack_error::{Diagnostic, IntoTWithDiagnosticArray, Result, TWithDiagnosticArray};
 use rspack_util::{itoa, json_stringify_str};
 use swc_core::atoms::Atom;
-use wasmparser::{Import, Parser, Payload};
+use wasmparser::{Import, Parser as WasmParser, Payload};
 
 use crate::dependency::WasmImportDependency;
 
 #[cacheable]
 #[derive(Debug)]
-pub struct AsyncWasmParserAndGenerator;
+pub struct AsyncWasmParser;
+
+#[cacheable]
+#[derive(Debug)]
+pub struct AsyncWasmGenerator;
 
 pub(crate) static WASM_SOURCE_TYPE: &[SourceType; 2] = &[SourceType::Wasm, SourceType::JavaScript];
 
@@ -31,13 +35,9 @@ struct DepModule<'a> {
 
 #[cacheable_dyn]
 #[async_trait::async_trait]
-impl ParserAndGenerator for AsyncWasmParserAndGenerator {
-  fn source_types(&self, _module: &dyn Module, _module_graph: &ModuleGraph) -> &[SourceType] {
-    WASM_SOURCE_TYPE
-  }
-
+impl Parser for AsyncWasmParser {
   async fn parse<'a>(
-    &mut self,
+    &self,
     parse_context: ParseContext<'a>,
   ) -> Result<TWithDiagnosticArray<ParseResult>> {
     parse_context.build_info.strict = true;
@@ -50,7 +50,7 @@ impl ParserAndGenerator for AsyncWasmParserAndGenerator {
     let mut dependencies: Vec<BoxDependency> = Vec::with_capacity(1);
     let mut diagnostic = Vec::with_capacity(1);
 
-    for payload in Parser::new(0).parse_all(&source.buffer()) {
+    for payload in WasmParser::new(0).parse_all(&source.buffer()) {
       match payload {
         Ok(payload) => match payload {
           Payload::ExportSection(s) => {
@@ -103,10 +103,19 @@ impl ParserAndGenerator for AsyncWasmParserAndGenerator {
         presentational_dependencies: vec![],
         code_generation_dependencies: vec![],
         source,
+        parser_data: None,
         side_effects_bailout: None,
       }
       .with_diagnostic(diagnostic),
     )
+  }
+}
+
+#[cacheable_dyn]
+#[async_trait::async_trait]
+impl Generator for AsyncWasmGenerator {
+  fn source_types(&self, _module: &dyn Module, _module_graph: &ModuleGraph) -> &[SourceType] {
+    WASM_SOURCE_TYPE
   }
 
   fn size(&self, module: &dyn Module, source_type: Option<&SourceType>) -> f64 {
@@ -296,6 +305,6 @@ impl ParserAndGenerator for AsyncWasmParserAndGenerator {
     _mg: &rspack_core::ModuleGraph,
     _cg: &rspack_core::ChunkGraph,
   ) -> Option<Cow<'static, str>> {
-    Some("Module Concatenation is not implemented for AsyncWasmParserAndGenerator".into())
+    Some("Module Concatenation is not implemented for AsyncWasmGenerator".into())
   }
 }

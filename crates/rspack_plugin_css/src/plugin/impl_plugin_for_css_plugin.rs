@@ -11,7 +11,7 @@ use rspack_core::{
   AssetInfo, Chunk, ChunkGraph, ChunkKind, ChunkLoading, ChunkLoadingType, ChunkUkey, Compilation,
   CompilationContentHash, CompilationId, CompilationParams, CompilationRenderManifest,
   CompilationRuntimeRequirementInTree, CompilerCompilation, DependencyType, ManifestAssetType,
-  Module, ModuleGraph, ModuleType, ParserAndGenerator, PathData, Plugin, PublicPath,
+  Generator, Module, ModuleGraph, ModuleType, Parser, PathData, Plugin, PublicPath,
   RenderManifestEntry, RuntimeGlobals, RuntimeModule, RuntimeModuleExt, SelfModuleFactory,
   SourceType, get_css_chunk_filename_template,
   rspack_sources::{
@@ -31,7 +31,7 @@ use crate::{
     CssImportDependencyTemplate, CssLayer, CssLocalIdentDependencyTemplate, CssMedia,
     CssSelfReferenceLocalIdentDependencyTemplate, CssSupports, CssUrlDependencyTemplate,
   },
-  parser_and_generator::{CodeGenerationDataUnusedLocalIdent, CssParserAndGenerator},
+  parser_and_generator::{CodeGenerationDataUnusedLocalIdent, CssGenerator, CssParser},
   plugin::{CssModulesPluginHooks, CssModulesRenderSource, CssPluginInner},
   runtime::CssLoadingRuntimeModule,
   utils::AUTO_PUBLIC_PATH_PLACEHOLDER,
@@ -516,87 +516,82 @@ impl Plugin for CssPlugin {
       .render_manifest
       .tap(render_manifest::new(self));
 
-    ctx.register_parser_and_generator_builder(
+    ctx.register_parser_builder(
       ModuleType::Css,
-      Box::new(|p, g| {
+      Box::new(|p| {
         let p = p
           .and_then(|p| p.get_css())
           .expect("should have CssParserOptions");
+        Box::new(CssParser {
+          named_exports: p.named_exports.expect("should have named_exports"),
+          url: p.url.expect("should have url"),
+          resolve_import: p.resolve_import.clone().unwrap_or_default(),
+        }) as Box<dyn Parser>
+      }),
+    );
+    ctx.register_generator_builder(
+      ModuleType::Css,
+      Box::new(|g| {
         let g = g
           .and_then(|g| g.get_css())
           .expect("should have CssGeneratorOptions");
-        Box::new(CssParserAndGenerator {
-          exports: None,
-          local_names: None,
-          convention: None,
-          local_ident_name: None,
+        Box::new(CssGenerator {
           exports_only: g.exports_only.expect("should have exports_only"),
-          named_exports: p.named_exports.expect("should have named_exports"),
           es_module: g.es_module.expect("should have es_module"),
           hot: false,
-          url: p.url.expect("should have url"),
-          resolve_import: p.resolve_import.clone().unwrap_or_default(),
-        }) as Box<dyn ParserAndGenerator>
+        }) as Box<dyn Generator>
       }),
     );
-    ctx.register_parser_and_generator_builder(
+    ctx.register_parser_builder(
       ModuleType::CssModule,
-      Box::new(|p, g| {
+      Box::new(|p| {
         let p = p
           .and_then(|p| p.get_css_module())
           .expect("should have CssModuleParserOptions");
+        Box::new(CssParser {
+          named_exports: p.named_exports.expect("should have named_exports"),
+          url: p.url.expect("should have url"),
+          resolve_import: p.resolve_import.clone().unwrap_or_default(),
+        }) as Box<dyn Parser>
+      }),
+    );
+    ctx.register_generator_builder(
+      ModuleType::CssModule,
+      Box::new(|g| {
         let g = g
           .and_then(|g| g.get_css_module())
           .expect("should have CssModuleGeneratorOptions");
-        Box::new(CssParserAndGenerator {
-          exports: None,
-          local_names: None,
-          convention: Some(
-            g.exports_convention
-              .expect("should have exports_convention"),
-          ),
-          local_ident_name: Some(
-            g.local_ident_name
-              .clone()
-              .expect("should have local_ident_name"),
-          ),
+        Box::new(CssGenerator {
           exports_only: g.exports_only.expect("should have exports_only"),
-          named_exports: p.named_exports.expect("should have named_exports"),
           es_module: g.es_module.expect("should have es_module"),
           hot: false,
-          url: p.url.expect("should have url"),
-          resolve_import: p.resolve_import.clone().unwrap_or_default(),
-        }) as Box<dyn ParserAndGenerator>
+        }) as Box<dyn Generator>
       }),
     );
-    ctx.register_parser_and_generator_builder(
+    ctx.register_parser_builder(
       ModuleType::CssAuto,
-      Box::new(|p, g| {
+      Box::new(|p| {
         let p = p
           .and_then(|p| p.get_css_auto())
           .expect("should have CssAutoParserOptions");
+        Box::new(CssParser {
+          named_exports: p.named_exports.expect("should have named_exports"),
+          url: p.url.expect("should have url"),
+          resolve_import: p.resolve_import.clone().unwrap_or_default(),
+        }) as Box<dyn Parser>
+      }),
+    );
+    ctx.register_generator_builder(
+      ModuleType::CssAuto,
+      Box::new(|g| {
         let g = g
           .and_then(|g| g.get_css_auto())
           .expect("should have CssAutoGeneratorOptions");
-        Box::new(CssParserAndGenerator {
-          exports: None,
-          local_names: None,
-          convention: Some(
-            g.exports_convention
-              .expect("should have exports_convention"),
-          ),
-          local_ident_name: Some(
-            g.local_ident_name
-              .clone()
-              .expect("should have local_ident_name"),
-          ),
+        Box::new(CssGenerator {
           exports_only: g.exports_only.expect("should have exports_only"),
-          named_exports: p.named_exports.expect("should have named_exports"),
           es_module: g.es_module.expect("should have es_module"),
           hot: false,
-          url: p.url.expect("should have url"),
-          resolve_import: p.resolve_import.clone().unwrap_or_default(),
-        }) as Box<dyn ParserAndGenerator>
+        }) as Box<dyn Generator>
       }),
     );
 

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use rspack_core::{
   ChunkInitFragments, ChunkUkey, CodeGenerationDataFilename, Compilation, CompilationParams,
   CompilerCompilation, DependencyId, JavascriptParserUrl, Module, ModuleType,
-  NormalModuleFactoryParser, ParserAndGenerator, ParserOptions, Plugin, RuntimeCodeTemplate,
+  NormalModuleFactoryParser, Parser, ParserOptions, Plugin, RuntimeCodeTemplate,
   URLStaticMode, rspack_sources::ReplaceSource,
 };
 use rspack_error::Result;
@@ -12,7 +12,7 @@ use rspack_hook::{plugin, plugin_hook};
 use crate::{
   JavascriptModulesRenderModuleContent, JsPlugin, RenderSource,
   dependency::{URL_STATIC_PLACEHOLDER, URL_STATIC_PLACEHOLDER_RE},
-  parser_and_generator::JavaScriptParserAndGenerator,
+  parser_and_generator::JavaScriptParser,
 };
 
 #[plugin]
@@ -37,10 +37,10 @@ async fn compilation(
 async fn normal_module_factory_parser(
   &self,
   _module_type: &ModuleType,
-  parser: &mut Box<dyn ParserAndGenerator>,
+  parser: &mut Box<dyn Parser>,
   parser_options: Option<&ParserOptions>,
 ) -> Result<()> {
-  if let Some(parser) = parser.downcast_mut::<JavaScriptParserAndGenerator>() {
+  if let Some(parser) = parser.downcast_mut::<JavaScriptParser>() {
     let options = parser_options
       .and_then(|p| p.get_javascript())
       .expect("should at least have a global javascript parser options");

@@ -13,9 +13,9 @@ use json::{
 use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_core::{
   BuildMetaDefaultObject, BuildMetaExportsType, ChunkGraph, ExportsInfoArtifact, ExportsInfoGetter,
-  GenerateContext, Module, ModuleArgument, ModuleGraph, NAMESPACE_OBJECT_EXPORT, ParseOption,
-  ParserAndGenerator, Plugin, PrefetchExportsInfoMode, PrefetchedExportsInfoWrapper, RuntimeSpec,
-  SourceType, UsageState, UsedNameItem,
+  GenerateContext, Generator, Module, ModuleArgument, ModuleGraph, NAMESPACE_OBJECT_EXPORT,
+  ParseOption, Parser, Plugin, PrefetchExportsInfoMode, PrefetchedExportsInfoWrapper,
+  RuntimeSpec, SourceType, UsageState, UsedNameItem,
   diagnostics::ModuleParseError,
   rspack_sources::{BoxSource, OriginalSource, RawStringSource, Source, SourceExt},
 };
@@ -29,28 +29,21 @@ mod utils;
 
 #[cacheable]
 #[derive(Debug)]
-struct JsonParserAndGenerator {
+struct JsonParser {
   pub exports_depth: u32,
+}
+
+#[cacheable]
+#[derive(Debug)]
+struct JsonGenerator {
   pub json_parse: bool,
 }
 
 #[cacheable_dyn]
 #[async_trait::async_trait]
-impl ParserAndGenerator for JsonParserAndGenerator {
-  fn source_types(&self, _module: &dyn Module, _module_graph: &ModuleGraph) -> &[SourceType] {
-    &[SourceType::JavaScript]
-  }
-
-  fn size(&self, module: &dyn Module, _source_type: Option<&SourceType>) -> f64 {
-    module
-      .build_info()
-      .json_data
-      .as_ref()
-      .map_or(0.0, |data| stringify(data.clone()).len() as f64)
-  }
-
+impl Parser for JsonParser {
   async fn parse<'a>(
-    &mut self,
+    &self,
     parse_context: rspack_core::ParseContext<'a>,
   ) -> Result<TWithDiagnosticArray<rspack_core::ParseResult>> {
     let rspack_core::ParseContext {
@@ -129,6 +122,7 @@ impl ParserAndGenerator for JsonParserAndGenerator {
             blocks: vec![],
             code_generation_dependencies: vec![],
             source: box_source,
+            parser_data: None,
             side_effects_bailout: None,
           }
           .with_diagnostic(vec![
@@ -158,10 +152,27 @@ impl ParserAndGenerator for JsonParserAndGenerator {
         blocks: vec![],
         code_generation_dependencies: vec![],
         source: box_source,
+        parser_data: None,
         side_effects_bailout: None,
       }
       .with_diagnostic(vec![]),
     )
+  }
+}
+
+#[cacheable_dyn]
+#[async_trait::async_trait]
+impl Generator for JsonGenerator {
+  fn source_types(&self, _module: &dyn Module, _module_graph: &ModuleGraph) -> &[SourceType] {
+    &[SourceType::JavaScript]
+  }
+
+  fn size(&self, module: &dyn Module, _source_type: Option<&SourceType>) -> f64 {
+    module
+      .build_info()
+      .json_data
+      .as_ref()
+      .map_or(0.0, |data| stringify(data.clone()).len() as f64)
   }
 
   // Safety: `ast_and_source` is available in code generation.
@@ -263,21 +274,28 @@ impl Plugin for JsonPlugin {
   }
 
   fn apply(&self, ctx: &mut rspack_core::ApplyContext<'_>) -> Result<()> {
-    ctx.register_parser_and_generator_builder(
+    ctx.register_parser_builder(
       rspack_core::ModuleType::Json,
-      Box::new(|p, g| {
+      Box::new(|p| {
         let p = p
           .and_then(|p| p.get_json())
           .expect("should have JsonParserOptions");
 
+        Box::new(JsonParser {
+          exports_depth: p.exports_depth.expect("should have exports_depth"),
+        }) as Box<dyn Parser>
+      }),
+    );
+    ctx.register_generator_builder(
+      rspack_core::ModuleType::Json,
+      Box::new(|g| {
         let g = g
           .and_then(|g| g.get_json())
           .expect("should have JsonGeneratorOptions");
 
-        Box::new(JsonParserAndGenerator {
-          exports_depth: p.exports_depth.expect("should have exports_depth"),
+        Box::new(JsonGenerator {
           json_parse: g.json_parse.expect("should have json_parse"),
-        })
+        }) as Box<dyn Generator>
       }),
     );
 

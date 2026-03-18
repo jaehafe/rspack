@@ -8,20 +8,20 @@ use rspack_core::{
   AssetInfo, Chunk, ChunkGraph, ChunkKind, ChunkUkey, Compilation,
   CompilationAdditionalTreeRuntimeRequirements, CompilationAsset, CompilationParams,
   CompilationProcessAssets, CompilationRecords, CompilerCompilation, DependencyType, LoaderContext,
-  ModuleId, ModuleIdentifier, ModuleType, NormalModuleFactoryParser, NormalModuleLoader,
-  ParserAndGenerator, ParserOptions, PathData, Plugin, RunnerContext, RuntimeGlobals,
-  RuntimeModule, RuntimeModuleExt, RuntimeSpec,
+  Generator, ModuleId, ModuleIdentifier, ModuleType, NormalModuleFactoryGenerator,
+  NormalModuleFactoryParser, NormalModuleLoader, Parser, ParserOptions, PathData, Plugin,
+  RunnerContext, RuntimeGlobals, RuntimeModule, RuntimeModuleExt, RuntimeSpec,
   chunk_graph_chunk::{ChunkId, ChunkIdSet},
   rspack_sources::{RawStringSource, SourceExt},
 };
 use rspack_error::{Diagnostic, Result};
 use rspack_hook::{plugin, plugin_hook};
-use rspack_plugin_css::parser_and_generator::CssParserAndGenerator;
+use rspack_plugin_css::parser_and_generator::CssGenerator;
 use rspack_plugin_javascript::{
   hot_module_replacement_plugin::{
     ImportMetaHotReplacementParserPlugin, ModuleHotReplacementParserPlugin,
   },
-  parser_and_generator::JavaScriptParserAndGenerator,
+  parser_and_generator::JavaScriptParser,
 };
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
@@ -433,10 +433,10 @@ async fn normal_module_loader(&self, context: &mut LoaderContext<RunnerContext>)
 async fn normal_module_factory_parser(
   &self,
   module_type: &ModuleType,
-  parser: &mut Box<dyn ParserAndGenerator>,
+  parser: &mut Box<dyn Parser>,
   _parser_options: Option<&ParserOptions>,
 ) -> Result<()> {
-  if let Some(parser) = parser.downcast_mut::<JavaScriptParserAndGenerator>() {
+  if let Some(parser) = parser.downcast_mut::<JavaScriptParser>() {
     if module_type.is_js_auto() {
       parser.add_parser_plugin(Arc::new(ModuleHotReplacementParserPlugin::new()));
       parser.add_parser_plugin(Arc::new(ImportMetaHotReplacementParserPlugin::new()));
@@ -445,12 +445,23 @@ async fn normal_module_factory_parser(
     } else if module_type.is_js_esm() {
       parser.add_parser_plugin(Arc::new(ImportMetaHotReplacementParserPlugin::new()));
     }
-  } else if matches!(
+  }
+  Ok(())
+}
+
+#[plugin_hook(NormalModuleFactoryGenerator for HotModuleReplacementPlugin)]
+async fn normal_module_factory_generator(
+  &self,
+  module_type: &ModuleType,
+  generator: &mut Box<dyn Generator>,
+  _generator_options: Option<&rspack_core::GeneratorOptions>,
+) -> Result<()> {
+  if matches!(
     module_type,
     ModuleType::Css | ModuleType::CssAuto | ModuleType::CssModule
-  ) && let Some(parser) = parser.downcast_mut::<CssParserAndGenerator>()
+  ) && let Some(generator) = generator.downcast_mut::<CssGenerator>()
   {
-    parser.hot = true;
+    generator.hot = true;
   }
 
   Ok(())
@@ -489,6 +500,10 @@ impl Plugin for HotModuleReplacementPlugin {
       .normal_module_factory_hooks
       .parser
       .tap(normal_module_factory_parser::new(self));
+    ctx
+      .normal_module_factory_hooks
+      .generator
+      .tap(normal_module_factory_generator::new(self));
     ctx
       .compilation_hooks
       .additional_tree_runtime_requirements

@@ -5,7 +5,7 @@ use rspack_core::{
   CompilationAdditionalTreeRuntimeRequirements, CompilationChunkHash, CompilationContentHash,
   CompilationId, CompilationParams, CompilationRenderManifest, CompilerCompilation,
   ConstDependencyTemplate, DependencyType, IgnoreErrorModuleFactory, ManifestAssetType,
-  ModuleGraph, ModuleType, ParserAndGenerator, PathData, Plugin, RenderManifestEntry,
+  Generator, ModuleGraph, ModuleType, Parser, PathData, Plugin, RenderManifestEntry,
   RuntimeGlobals, RuntimeModule, RuntimeRequirementsDependencyTemplate, SelfModuleFactory,
   SourceType, get_js_chunk_filename_template,
   rspack_sources::{BoxSource, CachedSource, SourceExt},
@@ -45,7 +45,7 @@ use crate::{
     local_module_dependency::LocalModuleDependencyTemplate,
     unsupported_dependency::UnsupportedDependencyTemplate,
   },
-  parser_and_generator::JavaScriptParserAndGenerator,
+  parser_and_generator::{JavaScriptGenerator, JavaScriptParser},
 };
 
 #[plugin_hook(CompilerCompilation for JsPlugin)]
@@ -637,20 +637,23 @@ impl Plugin for JsPlugin {
       .render_manifest
       .tap(render_manifest::new(self));
 
-    ctx.register_parser_and_generator_builder(ModuleType::JsAuto, {
-      Box::new(move |_, _| {
-        Box::<JavaScriptParserAndGenerator>::default() as Box<dyn ParserAndGenerator>
-      })
+    ctx.register_parser_builder(ModuleType::JsAuto, {
+      Box::new(move |_| Box::<JavaScriptParser>::default() as Box<dyn Parser>)
     });
-    ctx.register_parser_and_generator_builder(ModuleType::JsEsm, {
-      Box::new(move |_, _| {
-        Box::<JavaScriptParserAndGenerator>::default() as Box<dyn ParserAndGenerator>
-      })
+    ctx.register_generator_builder(ModuleType::JsAuto, {
+      Box::new(move |_| Box::<JavaScriptGenerator>::default() as Box<dyn Generator>)
     });
-    ctx.register_parser_and_generator_builder(ModuleType::JsDynamic, {
-      Box::new(move |_, _| {
-        Box::<JavaScriptParserAndGenerator>::default() as Box<dyn ParserAndGenerator>
-      })
+    ctx.register_parser_builder(ModuleType::JsEsm, {
+      Box::new(move |_| Box::<JavaScriptParser>::default() as Box<dyn Parser>)
+    });
+    ctx.register_generator_builder(ModuleType::JsEsm, {
+      Box::new(move |_| Box::<JavaScriptGenerator>::default() as Box<dyn Generator>)
+    });
+    ctx.register_parser_builder(ModuleType::JsDynamic, {
+      Box::new(move |_| Box::<JavaScriptParser>::default() as Box<dyn Parser>)
+    });
+    ctx.register_generator_builder(ModuleType::JsDynamic, {
+      Box::new(move |_| Box::<JavaScriptGenerator>::default() as Box<dyn Generator>)
     });
 
     Ok(())

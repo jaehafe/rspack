@@ -13,8 +13,8 @@ use rspack_core::{
   CompilationContentHash, CompilationParams, CompilationRenderManifest,
   CompilationRuntimeRequirementInTree, CompilerCompilation, DependencyType, Filename,
   ManifestAssetType, Module, ModuleGraph, ModuleIdentifier, ModuleType, NormalModuleFactoryParser,
-  ParserAndGenerator, ParserOptions, PathData, Plugin, RenderManifestEntry, RuntimeGlobals,
-  RuntimeModule, SourceType, get_undo_path,
+  Parser, ParserOptions, PathData, Plugin, RenderManifestEntry, RuntimeGlobals, RuntimeModule,
+  SourceType, get_undo_path,
   rspack_sources::{
     BoxSource, CachedSource, ConcatSource, RawStringSource, SourceExt, SourceMap, SourceMapSource,
     WithoutOriginalOptions,
@@ -24,7 +24,7 @@ use rspack_error::{Diagnostic, Result};
 use rspack_hash::RspackHash;
 use rspack_hook::{plugin, plugin_hook};
 use rspack_plugin_javascript::{
-  BoxJavascriptParserPlugin, parser_and_generator::JavaScriptParserAndGenerator,
+  BoxJavascriptParserPlugin, parser_and_generator::JavaScriptParser,
 };
 use rspack_plugin_runtime::GetChunkFilenameRuntimeModule;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -719,11 +719,11 @@ async fn render_manifest(
 async fn nmf_parser(
   &self,
   module_type: &ModuleType,
-  parser: &mut Box<dyn ParserAndGenerator>,
+  parser: &mut Box<dyn Parser>,
   _parser_options: Option<&ParserOptions>,
 ) -> Result<()> {
   if module_type.is_js_like()
-    && let Some(parser) = parser.downcast_mut::<JavaScriptParserAndGenerator>()
+    && let Some(parser) = parser.downcast_mut::<JavaScriptParser>()
   {
     parser.add_parser_plugin(
       Arc::new(PluginCssExtractParserPlugin::default()) as BoxJavascriptParserPlugin

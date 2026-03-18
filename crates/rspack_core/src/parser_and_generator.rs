@@ -1,4 +1,4 @@
-use std::{any::Any, borrow::Cow, ops::Deref};
+use std::{any::Any, borrow::Cow, ops::Deref, sync::Arc};
 
 use derive_more::with_trait::Debug;
 use rspack_cacheable::{
@@ -17,8 +17,8 @@ use crate::{
   AsyncDependenciesBlock, BoxDependency, BoxDependencyTemplate, BoxLoader, BoxModuleDependency,
   BuildInfo, BuildMeta, ChunkGraph, CodeGenerationData, Compilation, CompilerOptions,
   ConcatenationScope, Context, DependencyLocation, DependencyRange, EvaluatedInlinableValue,
-  FactoryMeta, Module, ModuleCodeTemplate, ModuleGraph, ModuleIdentifier, ModuleLayer, ModuleType,
-  NormalModule, ParserOptions, RuntimeSpec, SourceType,
+  FactoryMeta, GeneratorOptions, Module, ModuleCodeTemplate, ModuleGraph, ModuleIdentifier,
+  ModuleLayer, ModuleType, NormalModule, ParserOptions, RuntimeSpec, SourceType,
 };
 
 #[derive(Debug)]
@@ -30,6 +30,7 @@ pub struct ParseContext<'a> {
   pub module_layer: Option<&'a ModuleLayer>,
   pub module_user_request: &'a str,
   pub module_parser_options: Option<&'a ParserOptions>,
+  pub module_generator_options: Option<&'a GeneratorOptions>,
   pub module_source_map_kind: SourceMapKind,
   pub module_match_resource: Option<&'a ResourceData>,
   #[debug(skip)]
@@ -109,6 +110,7 @@ pub struct ParseResult {
   pub presentational_dependencies: Vec<BoxDependencyTemplate>,
   pub code_generation_dependencies: Vec<BoxModuleDependency>,
   pub source: BoxSource,
+  pub parser_data: Option<BoxedParserData>,
   pub side_effects_bailout: Option<SideEffectsBailoutItem>,
 }
 
@@ -123,15 +125,45 @@ pub struct GenerateContext<'a> {
 }
 
 #[cacheable_dyn]
+pub trait ParserData: Send + Sync + Debug + AsAny {}
+
+pub type BoxedParserData = Arc<dyn ParserData>;
+
+impl dyn ParserData + '_ {
+  pub fn downcast_ref<D: Any>(&self) -> Option<&D> {
+    self.as_any().downcast_ref::<D>()
+  }
+}
+
+#[cacheable_dyn]
 #[async_trait::async_trait]
-pub trait ParserAndGenerator: Send + Sync + Debug + AsAny {
-  /// The source types that the generator can generate (the source types you can make requests for)
-  fn source_types(&self, module: &dyn Module, module_graph: &ModuleGraph) -> &[SourceType];
+pub trait Parser: Send + Sync + Debug + AsAny {
   /// Parse the source and return the dependencies and the ast or source
   async fn parse<'a>(
-    &mut self,
+    &self,
     parse_context: ParseContext<'a>,
   ) -> Result<TWithDiagnosticArray<ParseResult>>;
+}
+
+impl dyn Parser + '_ {
+  pub fn downcast_ref<D: Any>(&self) -> Option<&D> {
+    self.as_any().downcast_ref::<D>()
+  }
+
+  pub fn downcast_mut<D: Any>(&mut self) -> Option<&mut D> {
+    self.as_any_mut().downcast_mut::<D>()
+  }
+
+  pub fn is<D: Any>(&self) -> bool {
+    self.downcast_ref::<D>().is_some()
+  }
+}
+
+#[cacheable_dyn]
+#[async_trait::async_trait]
+pub trait Generator: Send + Sync + Debug + AsAny {
+  /// The source types that the generator can generate (the source types you can make requests for)
+  fn source_types(&self, module: &dyn Module, module_graph: &ModuleGraph) -> &[SourceType];
   /// Size of the original source
   fn size(&self, module: &dyn Module, source_type: Option<&SourceType>) -> f64;
   /// Generate source or AST based on the built source or AST
@@ -141,7 +173,6 @@ pub trait ParserAndGenerator: Send + Sync + Debug + AsAny {
     module: &dyn Module,
     generate_context: &mut GenerateContext,
   ) -> Result<BoxSource>;
-
   fn get_concatenation_bailout_reason(
     &self,
     _module: &dyn Module,
@@ -162,7 +193,7 @@ pub trait ParserAndGenerator: Send + Sync + Debug + AsAny {
   }
 }
 
-impl dyn ParserAndGenerator + '_ {
+impl dyn Generator + '_ {
   pub fn downcast_ref<D: Any>(&self) -> Option<&D> {
     self.as_any().downcast_ref::<D>()
   }
