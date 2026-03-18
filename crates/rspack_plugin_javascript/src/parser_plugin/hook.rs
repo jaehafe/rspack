@@ -148,6 +148,11 @@ impl<H> HookMap<H> {
 
 impl<H: Default> HookMap<H> {
   #[inline]
+  pub fn reserve(&mut self, additional: usize) {
+    self.map.reserve(additional);
+  }
+
+  #[inline]
   pub fn r#for(&mut self, key: impl ToString) -> &mut H {
     self.map.entry(Cow::Owned(key.to_string())).or_default()
   }

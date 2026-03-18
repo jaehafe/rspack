@@ -165,6 +165,7 @@ crate::impl_javascript_parser_hook!(
 
 impl JavascriptParserPlugin for ProvideParserPlugin {
   fn apply(self: Arc<Self>, context: &mut JavascriptParserPluginContext<'_>) {
+    context.hooks.can_rename.reserve(self.names.len());
     for key in self.names.iter() {
       context
         .hooks
@@ -173,6 +174,11 @@ impl JavascriptParserPlugin for ProvideParserPlugin {
         .tap(self.clone());
     }
 
+    let provide_count = self.provide.len();
+    context.hooks.rename.reserve(provide_count);
+    context.hooks.call.reserve(provide_count);
+    context.hooks.member.reserve(provide_count);
+    context.hooks.identifier.reserve(provide_count);
     for key in self.provide.keys() {
       let key = key.as_str();
       context.hooks.rename.r#for(key).tap(self.clone());

@@ -11,7 +11,6 @@ use std::{
   borrow::Cow,
   fmt::Display,
   hash::{Hash, Hasher},
-  rc::Rc,
   sync::Arc,
 };
 
@@ -45,7 +44,7 @@ use swc_core::{
 };
 
 use crate::{
-  BoxJavascriptParserPlugin,
+  BoxJavascriptParserPlugin, JavascriptParserPlugin, JavascriptParserPluginContext,
   dependency::local_module::LocalModule,
   parser_and_generator::ParserRuntimeRequirementsData,
   parser_plugin::{
@@ -417,55 +416,54 @@ impl<'parser> JavascriptParser<'parser> {
     let presentational_dependencies = Vec::with_capacity(64);
     let parser_exports_state: Option<bool> = None;
 
-    let mut plugins: Vec<BoxJavascriptParserPlugin> = Vec::with_capacity(32);
+    let mut hooks = JavascriptParserHooks::default();
+    let mut context = JavascriptParserPluginContext {
+      hooks: &mut hooks,
+      parser_runtime_requirements,
+    };
 
-    plugins.append(parser_plugins);
+    for plugin in parser_plugins.drain(..) {
+      plugin.apply(&mut context);
+    }
 
-    plugins.push(Arc::new(parser_plugin::InitializeEvaluating));
-    plugins.push(Arc::new(parser_plugin::JavascriptMetaInfoPlugin));
-    plugins.push(Arc::new(parser_plugin::CheckVarDeclaratorIdent));
-    plugins.push(Arc::new(parser_plugin::ConstPlugin));
-    plugins.push(Arc::new(parser_plugin::UseStrictPlugin));
-    plugins.push(Arc::new(
-      parser_plugin::RequireContextDependencyParserPlugin,
-    ));
-    plugins.push(Arc::new(
-      parser_plugin::RequireEnsureDependenciesBlockParserPlugin,
-    ));
-    plugins.push(Arc::new(parser_plugin::CompatibilityPlugin));
+    Arc::new(parser_plugin::InitializeEvaluating).apply(&mut context);
+    Arc::new(parser_plugin::JavascriptMetaInfoPlugin).apply(&mut context);
+    Arc::new(parser_plugin::CheckVarDeclaratorIdent).apply(&mut context);
+    Arc::new(parser_plugin::ConstPlugin).apply(&mut context);
+    Arc::new(parser_plugin::UseStrictPlugin).apply(&mut context);
+    Arc::new(parser_plugin::RequireContextDependencyParserPlugin).apply(&mut context);
+    Arc::new(parser_plugin::RequireEnsureDependenciesBlockParserPlugin).apply(&mut context);
+    Arc::new(parser_plugin::CompatibilityPlugin).apply(&mut context);
 
     if module_type.is_js_auto() || module_type.is_js_esm() {
-      plugins.push(Arc::new(parser_plugin::ESMTopLevelThisParserPlugin));
-      plugins.push(Arc::new(parser_plugin::ESMDetectionParserPlugin));
-      plugins.push(Arc::new(
-        parser_plugin::ImportMetaContextDependencyParserPlugin,
-      ));
+      Arc::new(parser_plugin::ESMTopLevelThisParserPlugin).apply(&mut context);
+      Arc::new(parser_plugin::ESMDetectionParserPlugin).apply(&mut context);
+      Arc::new(parser_plugin::ImportMetaContextDependencyParserPlugin).apply(&mut context);
       if matches!(
         javascript_options.import_meta,
         Some(ImportMeta::Enabled | ImportMeta::PreserveUnknown)
       ) {
-        plugins.push(Arc::new(parser_plugin::ImportMetaPlugin(
+        Arc::new(parser_plugin::ImportMetaPlugin(
           javascript_options.import_meta.expect("should have value"),
-        )));
+        ))
+        .apply(&mut context);
       } else {
-        plugins.push(Arc::new(parser_plugin::ImportMetaDisabledPlugin));
+        Arc::new(parser_plugin::ImportMetaDisabledPlugin).apply(&mut context);
       }
 
-      plugins.push(Arc::new(parser_plugin::ESMImportDependencyParserPlugin));
-      plugins.push(Arc::new(parser_plugin::ESMExportDependencyParserPlugin));
+      Arc::new(parser_plugin::ESMImportDependencyParserPlugin).apply(&mut context);
+      Arc::new(parser_plugin::ESMExportDependencyParserPlugin).apply(&mut context);
     }
 
     if compiler_options.amd.is_some() && (module_type.is_js_auto() || module_type.is_js_dynamic()) {
-      plugins.push(Arc::new(
-        parser_plugin::AMDRequireDependenciesBlockParserPlugin,
-      ));
-      plugins.push(Arc::new(parser_plugin::AMDDefineDependencyParserPlugin));
-      plugins.push(Arc::new(parser_plugin::AMDParserPlugin));
+      Arc::new(parser_plugin::AMDRequireDependenciesBlockParserPlugin).apply(&mut context);
+      Arc::new(parser_plugin::AMDDefineDependencyParserPlugin).apply(&mut context);
+      Arc::new(parser_plugin::AMDParserPlugin).apply(&mut context);
     }
 
     if module_type.is_js_auto() || module_type.is_js_dynamic() {
-      plugins.push(Arc::new(parser_plugin::CommonJsImportsParserPlugin));
-      plugins.push(Arc::new(parser_plugin::CommonJsPlugin));
+      Arc::new(parser_plugin::CommonJsImportsParserPlugin).apply(&mut context);
+      Arc::new(parser_plugin::CommonJsPlugin).apply(&mut context);
       let commonjs_exports = javascript_options
         .commonjs
         .as_ref()
@@ -473,9 +471,10 @@ impl<'parser> JavascriptParser<'parser> {
           commonjs.exports
         });
       if commonjs_exports != JavascriptParserCommonjsExportsOption::Disable {
-        plugins.push(Arc::new(parser_plugin::CommonJsExportsParserPlugin::new(
+        Arc::new(parser_plugin::CommonJsExportsParserPlugin::new(
           commonjs_exports == JavascriptParserCommonjsExportsOption::SkipInEsm,
-        )));
+        ))
+        .apply(&mut context);
       }
     }
 
@@ -485,52 +484,40 @@ impl<'parser> JavascriptParser<'parser> {
       (module_type.is_js_auto() || module_type.is_js_dynamic()) && compiler_options.node.is_some();
     let handle_esm = module_type.is_js_auto() || module_type.is_js_esm();
     if handle_cjs || handle_esm {
-      plugins.push(Arc::new(parser_plugin::NodeStuffPlugin::new(
-        handle_cjs, handle_esm,
-      )));
+      Arc::new(parser_plugin::NodeStuffPlugin::new(handle_cjs, handle_esm)).apply(&mut context);
     }
 
     if module_type.is_js_auto() || module_type.is_js_dynamic() || module_type.is_js_esm() {
-      plugins.push(Arc::new(parser_plugin::IsIncludedPlugin));
-      plugins.push(Arc::new(parser_plugin::ExportsInfoApiPlugin));
-      plugins.push(Arc::new(parser_plugin::APIPlugin::new(
+      Arc::new(parser_plugin::IsIncludedPlugin).apply(&mut context);
+      Arc::new(parser_plugin::ExportsInfoApiPlugin).apply(&mut context);
+      Arc::new(parser_plugin::APIPlugin::new(
         compiler_options.output.module,
-      )));
-      plugins.push(Arc::new(parser_plugin::ImportParserPlugin));
-      plugins.push(Arc::new(parser_plugin::WorkerPlugin::new(
+      ))
+      .apply(&mut context);
+      Arc::new(parser_plugin::ImportParserPlugin).apply(&mut context);
+      Arc::new(parser_plugin::WorkerPlugin::new(
         javascript_options
           .worker
           .as_ref()
           .expect("should have worker"),
-      )));
-      plugins.push(Arc::new(parser_plugin::OverrideStrictPlugin));
+      ))
+      .apply(&mut context);
+      Arc::new(parser_plugin::OverrideStrictPlugin).apply(&mut context);
     }
 
     if compiler_options.optimization.inline_exports {
       build_info.inline_exports = true;
-      plugins.push(Arc::new(parser_plugin::InlineConstPlugin));
+      Arc::new(parser_plugin::InlineConstPlugin).apply(&mut context);
     }
     if compiler_options.optimization.inner_graph {
-      plugins.push(Arc::new(parser_plugin::InnerGraphPlugin::new(
-        unresolved_mark,
-      )));
+      Arc::new(parser_plugin::InnerGraphPlugin::new(unresolved_mark)).apply(&mut context);
     }
 
     if compiler_options.optimization.side_effects.is_true() {
-      plugins.push(Arc::new(parser_plugin::SideEffectsParserPlugin::new(
-        unresolved_mark,
-      )));
+      Arc::new(parser_plugin::SideEffectsParserPlugin::new(unresolved_mark)).apply(&mut context);
     }
 
-    let plugin_drive = JavascriptParserHooks::new(
-      plugins,
-      compiler_options,
-      javascript_options,
-      parser_runtime_requirements,
-      module_type,
-      module_layer,
-      resource_data,
-    );
+    let plugin_drive = Arc::new(hooks);
     let mut db = ScopeInfoDB::new();
 
     Self {

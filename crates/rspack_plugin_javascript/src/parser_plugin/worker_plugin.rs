@@ -559,6 +559,7 @@ crate::impl_javascript_parser_hook!(
 impl JavascriptParserPlugin for WorkerPlugin {
   fn apply(self: Arc<Self>, context: &mut JavascriptParserPluginContext<'_>) {
     context.hooks.pre_declarator.tap(self.clone());
+    context.hooks.pattern.reserve(self.pattern_syntax.len());
     for key in self.pattern_syntax.keys() {
       context.hooks.pattern.r#for(key.as_str()).tap(self.clone());
     }
@@ -572,6 +573,7 @@ impl JavascriptParserPlugin for WorkerPlugin {
       .call
       .for_static(ESM_SPECIFIER_TAG)
       .tap(self.clone());
+    context.hooks.call.reserve(self.call_syntax.len());
     for key in &self.call_syntax {
       context.hooks.call.r#for(key.as_str()).tap(self.clone());
     }
@@ -580,6 +582,7 @@ impl JavascriptParserPlugin for WorkerPlugin {
       .new_expression
       .for_static(ESM_SPECIFIER_TAG)
       .tap(self.clone());
+    context.hooks.new_expression.reserve(self.new_syntax.len());
     for key in &self.new_syntax {
       context
         .hooks

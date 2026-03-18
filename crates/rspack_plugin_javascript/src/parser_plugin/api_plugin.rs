@@ -470,6 +470,8 @@ impl JavascriptParserPlugin for APIPlugin {
   fn apply(self: Arc<Self>, context: &mut JavascriptParserPluginContext<'_>) {
     context.hooks.pre_declarator.tap(self.clone());
     context.hooks.pre_statement.tap(self.clone());
+    context.hooks.evaluate_typeof.reserve(17);
+    context.hooks.identifier.reserve(19);
 
     for key in [
       API_REQUIRE,
@@ -490,7 +492,11 @@ impl JavascriptParserPlugin for APIPlugin {
       API_UNIQUE_ID,
       API_RSC_MANIFEST,
     ] {
-      context.hooks.evaluate_typeof.r#for(key).tap(self.clone());
+      context
+        .hooks
+        .evaluate_typeof
+        .for_static(key)
+        .tap(self.clone());
     }
 
     for key in [
@@ -514,7 +520,7 @@ impl JavascriptParserPlugin for APIPlugin {
       API_UNIQUE_ID,
       API_RSC_MANIFEST,
     ] {
-      context.hooks.identifier.r#for(key).tap(self.clone());
+      context.hooks.identifier.for_static(key).tap(self.clone());
     }
 
     context

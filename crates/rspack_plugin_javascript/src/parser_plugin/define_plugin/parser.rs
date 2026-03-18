@@ -305,6 +305,10 @@ crate::impl_javascript_parser_hook!(
 
 impl JavascriptParserPlugin for DefineParserPlugin {
   fn apply(self: Arc<Self>, context: &mut JavascriptParserPluginContext<'_>) {
+    context
+      .hooks
+      .can_rename
+      .reserve(self.walk_data.can_rename.len());
     for key in self.walk_data.can_rename.keys() {
       context
         .hooks
@@ -329,6 +333,15 @@ impl JavascriptParserPlugin for DefineParserPlugin {
         .keys()
         .map(|key| key.as_ref()),
     );
+    let expression_key_count = expression_keys.len();
+    context.hooks.evaluate_typeof.reserve(expression_key_count);
+    context
+      .hooks
+      .evaluate_identifier
+      .reserve(expression_key_count);
+    context.hooks.r#typeof.reserve(expression_key_count);
+    context.hooks.member.reserve(expression_key_count);
+    context.hooks.identifier.reserve(expression_key_count);
 
     for key in expression_keys {
       context.hooks.evaluate_typeof.r#for(key).tap(self.clone());

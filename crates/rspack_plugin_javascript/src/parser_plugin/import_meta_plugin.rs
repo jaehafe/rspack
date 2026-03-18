@@ -507,11 +507,13 @@ crate::impl_javascript_parser_hook!(
 impl JavascriptParserPlugin for ImportMetaPlugin {
   fn apply(self: Arc<Self>, context: &mut JavascriptParserPluginContext<'_>) {
     context.hooks.evaluate_typeof_any.tap(self.clone());
+    context.hooks.evaluate_identifier.reserve(2);
+    context.hooks.r#typeof.reserve(4);
     for key in [expr_name::IMPORT_META_URL, expr_name::IMPORT_META_VERSION] {
       context
         .hooks
         .evaluate_identifier
-        .r#for(key)
+        .for_static(key)
         .tap(self.clone());
     }
     context.hooks.evaluate.tap(self.clone());
@@ -521,7 +523,7 @@ impl JavascriptParserPlugin for ImportMetaPlugin {
       expr_name::IMPORT_META_RESOLVE,
       expr_name::IMPORT_META_VERSION,
     ] {
-      context.hooks.r#typeof.r#for(key).tap(self.clone());
+      context.hooks.r#typeof.for_static(key).tap(self.clone());
     }
     context
       .hooks

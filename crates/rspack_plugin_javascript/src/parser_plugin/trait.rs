@@ -1,20 +1,11 @@
 use std::sync::Arc;
 
-use rspack_core::{
-  CompilerOptions, JavascriptParserOptions, ModuleLayer, ModuleType, ResourceData,
-};
-
 use super::JavascriptParserHooks;
 use crate::parser_and_generator::ParserRuntimeRequirementsData;
 
 pub struct JavascriptParserPluginContext<'a> {
   pub hooks: &'a mut JavascriptParserHooks,
-  pub compiler_options: &'a CompilerOptions,
-  pub javascript_options: &'a JavascriptParserOptions,
   pub parser_runtime_requirements: &'a ParserRuntimeRequirementsData,
-  pub module_type: &'a ModuleType,
-  pub module_layer: Option<&'a ModuleLayer>,
-  pub resource_data: &'a ResourceData,
 }
 
 pub trait JavascriptParserPlugin: Send + Sync {

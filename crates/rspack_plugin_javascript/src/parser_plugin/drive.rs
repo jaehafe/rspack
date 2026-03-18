@@ -1,9 +1,3 @@
-use std::sync::{Arc, LazyLock};
-
-use rspack_core::{
-  CompilerOptions, JavascriptParserOptions, ModuleLayer, ModuleType, ResourceData,
-};
-use rspack_util::fx_hash::FxDashMap;
 use swc_core::{
   atoms::Atom,
   common::Span,
@@ -15,8 +9,6 @@ use swc_core::{
 
 use super::hook::{HookMap, define_parser_sync_bail_hook, define_parser_sync_hook};
 use crate::{
-  parser_and_generator::ParserRuntimeRequirementsData,
-  parser_plugin::{BoxJavascriptParserPlugin, JavascriptParserPluginContext},
   utils::eval::BasicEvaluatedExpression,
   visitors::{
     ClassDeclOrExpr, DestructuringAssignmentProperty, ExportDefaultDeclaration,
@@ -440,51 +432,7 @@ pub struct JavascriptParserHooks {
   pub import_meta_property_in_destructuring: JavascriptParserImportMetaPropertyInDestructuringHook,
 }
 
-// Experimental cache for measuring parser hook construction cost. The key is intentionally
-// coarse and only uses the plugin count.
-static JAVASCRIPT_PARSER_HOOKS_CACHE: LazyLock<FxDashMap<usize, Arc<JavascriptParserHooks>>> =
-  LazyLock::new(FxDashMap::default);
-
 impl JavascriptParserHooks {
-  #[inline]
-  pub fn new(
-    plugins: Vec<BoxJavascriptParserPlugin>,
-    compiler_options: &CompilerOptions,
-    javascript_options: &JavascriptParserOptions,
-    parser_runtime_requirements: &ParserRuntimeRequirementsData,
-    module_type: &ModuleType,
-    module_layer: Option<&ModuleLayer>,
-    resource_data: &ResourceData,
-  ) -> Arc<Self> {
-    let plugin_count = plugins.len();
-    if let Some(hooks) = JAVASCRIPT_PARSER_HOOKS_CACHE.get(&plugin_count) {
-      return hooks.clone();
-    }
-
-    let mut hooks = Self::default();
-    let mut context = JavascriptParserPluginContext {
-      hooks: &mut hooks,
-      compiler_options,
-      javascript_options,
-      parser_runtime_requirements,
-      module_type,
-      module_layer,
-      resource_data,
-    };
-    for plugin in plugins {
-      plugin.apply(&mut context);
-    }
-
-    let hooks = Arc::new(hooks);
-
-    if let Some(cached_hooks) = JAVASCRIPT_PARSER_HOOKS_CACHE.get(&plugin_count) {
-      cached_hooks.clone()
-    } else {
-      JAVASCRIPT_PARSER_HOOKS_CACHE.insert(plugin_count, hooks.clone());
-      hooks
-    }
-  }
-
   call_sync!(top_level_await_expr(parser: &mut JavascriptParser, expr: &swc_core::ecma::ast::AwaitExpr));
   call_sync!(top_level_for_of_await_stmt(parser: &mut JavascriptParser, stmt: &swc_core::ecma::ast::ForOfStmt));
 
