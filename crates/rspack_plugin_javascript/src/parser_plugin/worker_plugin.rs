@@ -26,7 +26,7 @@ use crate::{
   magic_comment::try_extract_magic_comment,
   parser_plugin::url_plugin::is_meta_url,
   utils::object_properties::get_literal_str_by_obj_prop,
-  visitors::{JavascriptParser, TagInfoData, VariableDeclaration},
+  visitors::{JavascriptParserState, TagInfoData, VariableDeclaration},
 };
 
 #[derive(Debug)]
@@ -60,7 +60,7 @@ fn parse_new_worker_options(arg: &ExprOrSpread) -> ParsedNewWorkerOptions {
 }
 
 fn parse_new_worker_options_from_comments(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   span: Span,
   diagnostic_span: Span,
 ) -> Option<ParsedNewWorkerImportOptions> {
@@ -76,7 +76,7 @@ fn parse_new_worker_options_from_comments(
 }
 
 fn add_dependencies(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   span: Span,
   first_arg: &ExprOrSpread,
   parsed_path: ParsedNewWorkerPath,
@@ -150,7 +150,7 @@ fn add_dependencies(
 }
 
 fn handle_worker<'a>(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   args: &'a [ExprOrSpread],
   span: Span,
 ) -> Option<(
@@ -311,7 +311,7 @@ impl WorkerPlugin {
 impl WorkerPlugin {
   fn pre_declarator(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     decl: &VarDeclarator,
     _statement: VariableDeclaration<'_>,
   ) -> Option<bool> {
@@ -330,7 +330,12 @@ impl WorkerPlugin {
     None
   }
 
-  fn pattern(&self, parser: &mut JavascriptParser, ident: &Ident, for_name: &str) -> Option<bool> {
+  fn pattern(
+    &self,
+    parser: &mut JavascriptParserState,
+    ident: &Ident,
+    for_name: &str,
+  ) -> Option<bool> {
     if self.pattern_syntax.contains_key(for_name) {
       parser.tag_variable(
         ident.sym.clone(),
@@ -346,7 +351,7 @@ impl WorkerPlugin {
 
   fn call_member_chain(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     for_name: &str,
     members: &[Atom],
@@ -388,7 +393,7 @@ impl WorkerPlugin {
 
   fn call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -450,7 +455,7 @@ impl WorkerPlugin {
 
   fn new_expression(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     new_expr: &NewExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -519,7 +524,7 @@ crate::impl_javascript_parser_hook!(
   WorkerPlugin,
   JavascriptParserPreDeclarator,
   pre_declarator(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     decl: &VarDeclarator,
     statement: VariableDeclaration<'_>
   ) -> bool
@@ -527,13 +532,13 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   WorkerPlugin,
   JavascriptParserPattern,
-  pattern(parser: &mut JavascriptParser, ident: &Ident, for_name: &str) -> bool
+  pattern(parser: &mut JavascriptParserState, ident: &Ident, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   WorkerPlugin,
   JavascriptParserCallMemberChain,
   call_member_chain(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     for_name: &str,
     members: &[Atom],
@@ -544,13 +549,13 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   WorkerPlugin,
   JavascriptParserCall,
-  call(parser: &mut JavascriptParser, call_expr: &CallExpr, for_name: &str) -> bool
+  call(parser: &mut JavascriptParserState, call_expr: &CallExpr, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   WorkerPlugin,
   JavascriptParserNewExpression,
   new_expression(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     new_expr: &NewExpr,
     for_name: &str
   ) -> bool

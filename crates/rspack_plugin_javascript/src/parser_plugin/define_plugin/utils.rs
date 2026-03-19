@@ -6,10 +6,10 @@ use rspack_core::{
 };
 use serde_json::{Value, json};
 
-use crate::visitors::{DestructuringAssignmentProperties, JavascriptParser};
+use crate::visitors::{DestructuringAssignmentProperties, JavascriptParserState};
 
 pub fn gen_const_dep(
-  parser: &JavascriptParser,
+  parser: &JavascriptParserState,
   code: Cow<str>,
   for_name: &str,
   start: u32,

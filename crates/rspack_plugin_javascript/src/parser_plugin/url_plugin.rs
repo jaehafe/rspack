@@ -23,7 +23,7 @@ use crate::{
   dependency::{URLContextDependency, URLDependency},
   magic_comment::try_extract_magic_comment,
   parser_plugin::inner_graph::state::InnerGraphUsageOperation,
-  visitors::{ExprRef, JavascriptParser, context_reg_exp, create_context_dependency},
+  visitors::{ExprRef, JavascriptParserState, context_reg_exp, create_context_dependency},
 };
 
 #[derive(Default)]
@@ -43,7 +43,7 @@ impl Visit for NestedNewUrlVisitor {
   }
 }
 
-pub fn is_meta_url(parser: &mut JavascriptParser, expr: &MemberExpr) -> bool {
+pub fn is_meta_url(parser: &mut JavascriptParserState, expr: &MemberExpr) -> bool {
   let chain = parser.extract_member_expression_chain(ExprRef::Member(expr));
   if let ExprRef::MetaProp(meta) = chain.object {
     return meta.kind == MetaPropKind::ImportMeta
@@ -54,7 +54,7 @@ pub fn is_meta_url(parser: &mut JavascriptParser, expr: &MemberExpr) -> bool {
 }
 
 pub fn get_url_request(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   expr: &NewExpr,
 ) -> Option<(String, u32, u32)> {
   let args = expr.args.as_ref()?;
@@ -109,13 +109,13 @@ pub struct URLPlugin {
 }
 
 impl URLPlugin {
-  fn can_rename(&self, _parser: &mut JavascriptParser, for_name: &str) -> Option<bool> {
+  fn can_rename(&self, _parser: &mut JavascriptParserState, for_name: &str) -> Option<bool> {
     (for_name == "URL").then_some(true)
   }
 
   fn new_expression(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &NewExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -220,7 +220,7 @@ impl URLPlugin {
     Some(true)
   }
 
-  fn is_pure(&self, parser: &mut JavascriptParser, expr: &Expr) -> Option<bool> {
+  fn is_pure(&self, parser: &mut JavascriptParserState, expr: &Expr) -> Option<bool> {
     let expr = expr.as_new()?;
     let callee = expr.callee.as_ident()?;
     if parser.get_free_info_from_variable(&callee.sym).is_none() || !callee.sym.eq("URL") {
@@ -234,17 +234,17 @@ impl URLPlugin {
 crate::impl_javascript_parser_hook!(
   URLPlugin,
   JavascriptParserCanRename,
-  can_rename(parser: &mut JavascriptParser, for_name: &str) -> bool
+  can_rename(parser: &mut JavascriptParserState, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   URLPlugin,
   JavascriptParserNewExpression,
-  new_expression(parser: &mut JavascriptParser, expr: &NewExpr, for_name: &str) -> bool
+  new_expression(parser: &mut JavascriptParserState, expr: &NewExpr, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   URLPlugin,
   JavascriptParserIsPure,
-  is_pure(parser: &mut JavascriptParser, expr: &Expr) -> bool
+  is_pure(parser: &mut JavascriptParserState, expr: &Expr) -> bool
 );
 
 impl JavascriptParserPlugin for URLPlugin {

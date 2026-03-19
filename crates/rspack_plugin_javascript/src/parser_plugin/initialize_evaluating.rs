@@ -8,7 +8,7 @@ use super::{
   JavascriptParserEvaluateCallExpression, JavascriptParserEvaluateCallExpressionMember,
   JavascriptParserPlugin, JavascriptParserPluginContext,
 };
-use crate::{utils::eval::BasicEvaluatedExpression, visitors::JavascriptParser};
+use crate::{utils::eval::BasicEvaluatedExpression, visitors::JavascriptParserState};
 
 const SLICE_METHOD_NAME: &str = "slice";
 const REPLACE_METHOD_NAME: &str = "replace";
@@ -23,7 +23,7 @@ pub struct InitializeEvaluating;
 impl InitializeEvaluating {
   fn evaluate_call_expression<'a>(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     name: &str,
     expr: &'a CallExpr,
   ) -> Option<BasicEvaluatedExpression<'a>> {
@@ -63,7 +63,7 @@ impl InitializeEvaluating {
 
   fn evaluate_call_expression_member<'a>(
     &self,
-    parser: &mut crate::visitors::JavascriptParser,
+    parser: &mut crate::visitors::JavascriptParserState,
     property: &str,
     expr: &'a swc_core::ecma::ast::CallExpr,
     param: BasicEvaluatedExpression<'a>,
@@ -294,7 +294,7 @@ crate::impl_javascript_parser_hook!(
   JavascriptParserEvaluateCallExpression,
   <'a>,
   evaluate_call_expression(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     name: &str,
     expr: &'a CallExpr
   ) -> BasicEvaluatedExpression<'a>
@@ -304,7 +304,7 @@ crate::impl_javascript_parser_hook!(
   JavascriptParserEvaluateCallExpressionMember,
   <'a>,
   evaluate_call_expression_member(
-    parser: &mut crate::visitors::JavascriptParser,
+    parser: &mut crate::visitors::JavascriptParserState,
     property: &str,
     expr: &'a swc_core::ecma::ast::CallExpr,
     param: BasicEvaluatedExpression<'a>

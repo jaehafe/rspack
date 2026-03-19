@@ -15,7 +15,7 @@ use super::{
 };
 use crate::{
   dependency::CommonJsRequireContextDependency,
-  visitors::{JavascriptParser, Statement, TagInfoData, VariableDeclaration, expr_name},
+  visitors::{JavascriptParserState, Statement, TagInfoData, VariableDeclaration, expr_name},
 };
 
 pub const NESTED_IDENTIFIER_TAG: &str = "_identifier__nested_rspack_identifier__";
@@ -33,7 +33,7 @@ pub struct CompatibilityPlugin;
 impl CompatibilityPlugin {
   pub fn browserify_require_handler(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &CallExpr,
   ) -> Option<bool> {
     if expr.args.len() != 2 {
@@ -60,7 +60,7 @@ impl CompatibilityPlugin {
 
   fn tag_nested_require_data(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     name: Atom,
     rename: String,
     in_short_hand: bool,
@@ -83,7 +83,7 @@ impl CompatibilityPlugin {
 impl CompatibilityPlugin {
   fn program(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ast: &swc_core::ecma::ast::Program,
   ) -> Option<bool> {
     if ast
@@ -101,7 +101,7 @@ impl CompatibilityPlugin {
 
   fn pre_declarator(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     decl: &VarDeclarator,
     _statement: VariableDeclaration<'_>,
   ) -> Option<bool> {
@@ -142,7 +142,7 @@ impl CompatibilityPlugin {
 
   fn pattern(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &swc_core::ecma::ast::Ident,
     for_name: &str,
   ) -> Option<bool> {
@@ -178,7 +178,7 @@ impl CompatibilityPlugin {
     None
   }
 
-  fn pre_statement(&self, parser: &mut JavascriptParser, stmt: Statement) -> Option<bool> {
+  fn pre_statement(&self, parser: &mut JavascriptParserState, stmt: Statement) -> Option<bool> {
     let fn_decl = stmt.as_function_decl()?;
     let ident = fn_decl.ident()?;
     let name = &ident.sym;
@@ -203,7 +203,7 @@ impl CompatibilityPlugin {
 
   fn identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &swc_core::ecma::ast::Ident,
     for_name: &str,
   ) -> Option<bool> {
@@ -245,7 +245,7 @@ impl CompatibilityPlugin {
 
   fn call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -259,13 +259,13 @@ impl CompatibilityPlugin {
 crate::impl_javascript_parser_hook!(
   CompatibilityPlugin,
   JavascriptParserProgram,
-  program(parser: &mut JavascriptParser, ast: &swc_core::ecma::ast::Program) -> bool
+  program(parser: &mut JavascriptParserState, ast: &swc_core::ecma::ast::Program) -> bool
 );
 crate::impl_javascript_parser_hook!(
   CompatibilityPlugin,
   JavascriptParserPreDeclarator,
   pre_declarator(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     decl: &VarDeclarator,
     statement: VariableDeclaration<'_>
   ) -> bool
@@ -274,7 +274,7 @@ crate::impl_javascript_parser_hook!(
   CompatibilityPlugin,
   JavascriptParserPattern,
   pattern(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &swc_core::ecma::ast::Ident,
     for_name: &str
   ) -> bool
@@ -282,13 +282,13 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   CompatibilityPlugin,
   JavascriptParserPreStatement,
-  pre_statement(parser: &mut JavascriptParser, stmt: Statement) -> bool
+  pre_statement(parser: &mut JavascriptParserState, stmt: Statement) -> bool
 );
 crate::impl_javascript_parser_hook!(
   CompatibilityPlugin,
   JavascriptParserIdentifier,
   identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &swc_core::ecma::ast::Ident,
     for_name: &str
   ) -> bool
@@ -297,7 +297,7 @@ crate::impl_javascript_parser_hook!(
   CompatibilityPlugin,
   JavascriptParserCall,
   call(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str
   ) -> bool

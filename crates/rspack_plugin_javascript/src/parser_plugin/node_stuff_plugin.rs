@@ -17,7 +17,7 @@ use crate::{
   JavascriptParserTypeof,
   dependency::ExternalModuleDependency,
   utils::eval,
-  visitors::{DestructuringAssignmentProperty, JavascriptParser},
+  visitors::{DestructuringAssignmentProperty, JavascriptParserState},
 };
 
 const DIRNAME: &str = "__dirname";
@@ -164,7 +164,10 @@ impl NodeStuffPlugin {
   }
 
   /// Get the relative path value for the given property (filename or dirname)
-  fn get_relative_path(parser: &JavascriptParser, property: NodeMetaProperty) -> Option<String> {
+  fn get_relative_path(
+    parser: &JavascriptParserState,
+    property: NodeMetaProperty,
+  ) -> Option<String> {
     match property {
       NodeMetaProperty::Filename => Some(
         parser
@@ -189,7 +192,10 @@ impl NodeStuffPlugin {
   }
 
   /// Get the absolute path value for node-module mode
-  fn get_absolute_path(parser: &JavascriptParser, property: NodeMetaProperty) -> Option<String> {
+  fn get_absolute_path(
+    parser: &JavascriptParserState,
+    property: NodeMetaProperty,
+  ) -> Option<String> {
     let path = Url::from_file_path(parser.resource_data.resource())
       .expect("should be a path")
       .to_file_path()
@@ -208,7 +214,10 @@ impl NodeStuffPlugin {
   }
 
   /// Get the eval-only path value
-  fn get_eval_only_path(parser: &JavascriptParser, property: NodeMetaProperty) -> Option<String> {
+  fn get_eval_only_path(
+    parser: &JavascriptParserState,
+    property: NodeMetaProperty,
+  ) -> Option<String> {
     match property {
       NodeMetaProperty::Filename => {
         let resource = parse_resource(parser.resource_data.path()?.as_str())?;
@@ -219,7 +228,7 @@ impl NodeStuffPlugin {
   }
 
   /// Add external dependencies for NodeModule mode
-  fn add_node_module_dependencies(parser: &mut JavascriptParser, property: NodeMetaProperty) {
+  fn add_node_module_dependencies(parser: &mut JavascriptParserState, property: NodeMetaProperty) {
     let external_url_dep = ExternalModuleDependency::new(
       "url".to_string(),
       vec![(
@@ -241,7 +250,7 @@ impl NodeStuffPlugin {
   }
 
   fn add_cjs_node_module_dependency(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident_span: swc_core::common::Span,
     name: &str,
     property: NodeMetaProperty,
@@ -257,7 +266,7 @@ impl NodeStuffPlugin {
 
   /// Get the evaluated value for import.meta.filename/dirname
   fn get_import_meta_eval_value(
-    parser: &JavascriptParser,
+    parser: &JavascriptParserState,
     property: NodeMetaProperty,
   ) -> Option<String> {
     let node_option = parser.compiler_options.node.as_ref()?;
@@ -287,7 +296,7 @@ impl NodeStuffPlugin {
 
   /// Get the member replacement value for import.meta.filename/dirname
   fn get_import_meta_member_replacement(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     property: NodeMetaProperty,
   ) -> Option<String> {
     let node_option = match parser.compiler_options.node.as_ref() {
@@ -345,7 +354,7 @@ impl NodeStuffPlugin {
 
   /// Get the destructuring replacement value for import.meta.filename/dirname
   fn get_import_meta_destructuring_value(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     property: NodeMetaProperty,
   ) -> Option<String> {
     let node_option = match parser.compiler_options.node.as_ref() {
@@ -404,7 +413,7 @@ impl NodeStuffPlugin {
 impl NodeStuffPlugin {
   fn identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &swc_core::ecma::ast::Ident,
     for_name: &str,
   ) -> Option<bool> {
@@ -537,7 +546,12 @@ impl NodeStuffPlugin {
     None
   }
 
-  fn rename(&self, parser: &mut JavascriptParser, expr: &Expr, for_name: &str) -> Option<bool> {
+  fn rename(
+    &self,
+    parser: &mut JavascriptParserState,
+    expr: &Expr,
+    for_name: &str,
+  ) -> Option<bool> {
     // Skip CJS handling if not enabled
     if !self.handle_cjs {
       return None;
@@ -561,7 +575,7 @@ impl NodeStuffPlugin {
 
   fn r#typeof(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     unary_expr: &swc_core::ecma::ast::UnaryExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -658,7 +672,7 @@ impl NodeStuffPlugin {
 
   fn evaluate_typeof<'a>(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a swc_core::ecma::ast::UnaryExpr,
     for_name: &str,
   ) -> Option<eval::BasicEvaluatedExpression<'a>> {
@@ -719,7 +733,7 @@ impl NodeStuffPlugin {
 
   fn evaluate_identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32,
@@ -795,7 +809,7 @@ impl NodeStuffPlugin {
 
   fn member(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     member_expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -830,7 +844,7 @@ impl NodeStuffPlugin {
 
   fn import_meta_property_in_destructuring(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     property: &DestructuringAssignmentProperty,
   ) -> Option<String> {
     // Skip ESM handling if not enabled
@@ -861,7 +875,7 @@ crate::impl_javascript_parser_hook!(
   NodeStuffPlugin,
   JavascriptParserIdentifier,
   identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &swc_core::ecma::ast::Ident,
     for_name: &str
   ) -> bool
@@ -869,13 +883,13 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   NodeStuffPlugin,
   JavascriptParserRename,
-  rename(parser: &mut JavascriptParser, expr: &Expr, for_name: &str) -> bool
+  rename(parser: &mut JavascriptParserState, expr: &Expr, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   NodeStuffPlugin,
   JavascriptParserTypeof,
   r#typeof(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     unary_expr: &swc_core::ecma::ast::UnaryExpr,
     for_name: &str
   ) -> bool
@@ -885,7 +899,7 @@ crate::impl_javascript_parser_hook!(
   JavascriptParserEvaluateTypeof,
   <'a>,
   evaluate_typeof(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a swc_core::ecma::ast::UnaryExpr,
     for_name: &str
   ) -> eval::BasicEvaluatedExpression<'a>
@@ -894,7 +908,7 @@ crate::impl_javascript_parser_hook!(
   NodeStuffPlugin,
   JavascriptParserEvaluateIdentifier,
   evaluate_identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32
@@ -904,7 +918,7 @@ crate::impl_javascript_parser_hook!(
   NodeStuffPlugin,
   JavascriptParserMember,
   member(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     member_expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str
   ) -> bool
@@ -913,7 +927,7 @@ crate::impl_javascript_parser_hook!(
   NodeStuffPlugin,
   JavascriptParserImportMetaPropertyInDestructuring,
   import_meta_property_in_destructuring(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     property: &DestructuringAssignmentProperty
   ) -> String
 );

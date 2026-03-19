@@ -2,11 +2,11 @@ use rspack_util::SpanExt;
 use swc_core::ecma::ast::ArrayLit;
 
 use super::BasicEvaluatedExpression;
-use crate::visitors::JavascriptParser;
+use crate::visitors::JavascriptParserState;
 
 #[inline]
 pub fn eval_array_expression<'a>(
-  scanner: &mut JavascriptParser,
+  scanner: &mut JavascriptParserState,
   expr: &'a ArrayLit,
 ) -> Option<BasicEvaluatedExpression<'a>> {
   let mut items = vec![];

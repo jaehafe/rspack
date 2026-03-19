@@ -4,10 +4,10 @@ use rspack_core::{
   AssetInfo, CachedConstDependencyTemplate, ChunkGraph, ChunkKind, ChunkUkey, Compilation,
   CompilationAdditionalTreeRuntimeRequirements, CompilationChunkHash, CompilationContentHash,
   CompilationId, CompilationParams, CompilationRenderManifest, CompilerCompilation,
-  ConstDependencyTemplate, DependencyType, IgnoreErrorModuleFactory, ManifestAssetType,
-  Generator, ModuleGraph, ModuleType, Parser, PathData, Plugin, RenderManifestEntry,
-  RuntimeGlobals, RuntimeModule, RuntimeRequirementsDependencyTemplate, SelfModuleFactory,
-  SourceType, get_js_chunk_filename_template,
+  ConstDependencyTemplate, DependencyType, Generator, IgnoreErrorModuleFactory, ManifestAssetType,
+  ModuleGraph, ModuleType, Parser, PathData, Plugin, RenderManifestEntry, RuntimeGlobals,
+  RuntimeModule, RuntimeRequirementsDependencyTemplate, SelfModuleFactory, SourceType,
+  get_js_chunk_filename_template,
   rspack_sources::{BoxSource, CachedSource, SourceExt},
 };
 use rspack_error::{Diagnostic, Result};

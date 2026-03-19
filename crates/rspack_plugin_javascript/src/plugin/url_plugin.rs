@@ -3,8 +3,8 @@ use std::sync::Arc;
 use rspack_core::{
   ChunkInitFragments, ChunkUkey, CodeGenerationDataFilename, Compilation, CompilationParams,
   CompilerCompilation, DependencyId, JavascriptParserUrl, Module, ModuleType,
-  NormalModuleFactoryParser, Parser, ParserOptions, Plugin, RuntimeCodeTemplate,
-  URLStaticMode, rspack_sources::ReplaceSource,
+  NormalModuleFactoryParser, Parser, ParserOptions, Plugin, RuntimeCodeTemplate, URLStaticMode,
+  rspack_sources::ReplaceSource,
 };
 use rspack_error::Result;
 use rspack_hook::{plugin, plugin_hook};

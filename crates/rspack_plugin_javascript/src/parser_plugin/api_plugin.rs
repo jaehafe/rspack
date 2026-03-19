@@ -16,7 +16,7 @@ use crate::{
     JavascriptParserPluginContext, JavascriptParserPreDeclarator, JavascriptParserPreStatement,
   },
   utils::eval::{self, BasicEvaluatedExpression},
-  visitors::{JavascriptParser, Statement, VariableDeclaration, create_traceable_error},
+  visitors::{JavascriptParserState, Statement, VariableDeclaration, create_traceable_error},
 };
 
 fn expression_not_supported(
@@ -104,7 +104,7 @@ fn get_typeof_evaluate_of_api(sym: &str) -> Option<&str> {
 impl APIPlugin {
   fn evaluate_typeof<'a>(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a UnaryExpr,
     for_name: &str,
   ) -> Option<BasicEvaluatedExpression<'a>> {
@@ -128,7 +128,7 @@ impl APIPlugin {
 
   fn identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &Ident,
     for_name: &str,
   ) -> Option<bool> {
@@ -281,7 +281,7 @@ impl APIPlugin {
 
   fn evaluate_identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32,
@@ -299,7 +299,7 @@ impl APIPlugin {
 
   fn member(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     member_expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -349,7 +349,7 @@ impl APIPlugin {
 
   fn pre_declarator(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     declarator: &swc_core::ecma::ast::VarDeclarator,
     _declaration: VariableDeclaration<'_>,
   ) -> Option<bool> {
@@ -363,7 +363,7 @@ impl APIPlugin {
     None
   }
 
-  fn pre_statement(&self, parser: &mut JavascriptParser, stmt: Statement) -> Option<bool> {
+  fn pre_statement(&self, parser: &mut JavascriptParserState, stmt: Statement) -> Option<bool> {
     // Check if we're at top level scope
     if parser.is_top_level_scope() {
       match stmt {
@@ -391,7 +391,7 @@ impl APIPlugin {
 
   fn call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -417,7 +417,7 @@ crate::impl_javascript_parser_hook!(
   JavascriptParserEvaluateTypeof,
   <'a>,
   evaluate_typeof(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a UnaryExpr,
     for_name: &str
   ) -> BasicEvaluatedExpression<'a>
@@ -425,13 +425,13 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   APIPlugin,
   JavascriptParserIdentifier,
-  identifier(parser: &mut JavascriptParser, ident: &Ident, for_name: &str) -> bool
+  identifier(parser: &mut JavascriptParserState, ident: &Ident, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   APIPlugin,
   JavascriptParserEvaluateIdentifier,
   evaluate_identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32
@@ -441,7 +441,7 @@ crate::impl_javascript_parser_hook!(
   APIPlugin,
   JavascriptParserMember,
   member(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     member_expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str
   ) -> bool
@@ -450,7 +450,7 @@ crate::impl_javascript_parser_hook!(
   APIPlugin,
   JavascriptParserPreDeclarator,
   pre_declarator(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     declarator: &swc_core::ecma::ast::VarDeclarator,
     declaration: VariableDeclaration<'_>
   ) -> bool
@@ -458,12 +458,12 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   APIPlugin,
   JavascriptParserPreStatement,
-  pre_statement(parser: &mut JavascriptParser, stmt: Statement) -> bool
+  pre_statement(parser: &mut JavascriptParserState, stmt: Statement) -> bool
 );
 crate::impl_javascript_parser_hook!(
   APIPlugin,
   JavascriptParserCall,
-  call(parser: &mut JavascriptParser, call_expr: &CallExpr, for_name: &str) -> bool
+  call(parser: &mut JavascriptParserState, call_expr: &CallExpr, for_name: &str) -> bool
 );
 
 impl JavascriptParserPlugin for APIPlugin {

@@ -10,7 +10,7 @@ use swc_core::{
 };
 
 use super::{
-  DestructuringAssignmentProperty, JavascriptParser,
+  DestructuringAssignmentProperty, JavascriptParserState,
   estree::{MaybeNamedFunctionDecl, Statement},
 };
 use crate::{
@@ -18,7 +18,7 @@ use crate::{
   visitors::{DestructuringAssignmentProperties, VariableDeclaration, VariableDeclarationKind},
 };
 
-impl JavascriptParser<'_> {
+impl JavascriptParserState<'_> {
   pub fn pre_walk_module_items(&mut self, statements: &Vec<ModuleItem>) {
     for statement in statements {
       self.pre_walk_module_item(statement);

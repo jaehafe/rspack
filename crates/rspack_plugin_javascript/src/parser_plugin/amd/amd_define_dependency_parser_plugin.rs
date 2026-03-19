@@ -27,7 +27,8 @@ use crate::{
   },
   utils::eval::BasicEvaluatedExpression,
   visitors::{
-    ExportedVariableInfo, JavascriptParser, Statement, context_reg_exp, create_context_dependency,
+    ExportedVariableInfo, JavascriptParserState, Statement, context_reg_exp,
+    create_context_dependency,
   },
 };
 
@@ -113,7 +114,7 @@ fn get_ident_name(pat: &Pat) -> Atom {
 impl AMDDefineDependencyParserPlugin {
   fn process_array(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     param: &BasicEvaluatedExpression,
     identifiers: &mut FxHashMap<usize, Atom>, // param index => "require" | "module" | "exports"
@@ -168,7 +169,7 @@ impl AMDDefineDependencyParserPlugin {
 
   fn process_item(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     param: &BasicEvaluatedExpression,
     named_module: &Option<Atom>,
@@ -236,7 +237,7 @@ impl AMDDefineDependencyParserPlugin {
 
   fn process_context(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     param: &BasicEvaluatedExpression,
   ) -> Option<bool> {
@@ -271,7 +272,7 @@ impl AMDDefineDependencyParserPlugin {
 
   fn process_call_define(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
   ) -> Option<bool> {
     let mut array: Option<&Expr> = None;
@@ -591,7 +592,7 @@ impl AMDDefineDependencyParserPlugin {
 impl AMDDefineDependencyParserPlugin {
   fn call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -602,7 +603,7 @@ impl AMDDefineDependencyParserPlugin {
     }
   }
 
-  fn finish(&self, parser: &mut JavascriptParser) -> Option<bool> {
+  fn finish(&self, parser: &mut JavascriptParserState) -> Option<bool> {
     for local_module in std::mem::take(&mut parser.local_modules) {
       let dep_idx = local_module.amd_dep_idx();
       if let Some(dep) = parser.get_presentational_dependency_mut(dep_idx)
@@ -618,12 +619,12 @@ impl AMDDefineDependencyParserPlugin {
 crate::impl_javascript_parser_hook!(
   AMDDefineDependencyParserPlugin,
   JavascriptParserCall,
-  call(parser: &mut JavascriptParser, call_expr: &CallExpr, for_name: &str) -> bool
+  call(parser: &mut JavascriptParserState, call_expr: &CallExpr, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   AMDDefineDependencyParserPlugin,
   JavascriptParserFinish,
-  finish(parser: &mut JavascriptParser) -> bool
+  finish(parser: &mut JavascriptParserState) -> bool
 );
 
 impl JavascriptParserPlugin for AMDDefineDependencyParserPlugin {

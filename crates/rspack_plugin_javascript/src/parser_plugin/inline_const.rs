@@ -14,7 +14,7 @@ use crate::{
     evaluate_to_string, evaluate_to_undefined,
   },
   visitors::{
-    JavascriptParser, TagInfoData, VariableDeclaration, VariableDeclarationKind,
+    JavascriptParserState, TagInfoData, VariableDeclaration, VariableDeclarationKind,
     scope_info::VariableInfoFlags,
   },
 };
@@ -30,7 +30,7 @@ pub struct InlinableConstData {
 pub struct InlineConstPlugin;
 
 impl InlineConstPlugin {
-  fn program(&self, parser: &mut JavascriptParser, program: &Program) -> Option<bool> {
+  fn program(&self, parser: &mut JavascriptParserState, program: &Program) -> Option<bool> {
     if let Some(module) = program.as_module() {
       for item in &module.body {
         match item {
@@ -55,7 +55,7 @@ impl InlineConstPlugin {
 
   fn evaluate_identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32,
@@ -80,7 +80,7 @@ impl InlineConstPlugin {
 
   fn pre_declarator(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     declarator: &VarDeclarator,
     declaration: VariableDeclaration<'_>,
   ) -> Option<bool> {
@@ -108,13 +108,13 @@ impl InlineConstPlugin {
 crate::impl_javascript_parser_hook!(
   InlineConstPlugin,
   JavascriptParserProgram,
-  program(parser: &mut JavascriptParser, program: &Program) -> bool
+  program(parser: &mut JavascriptParserState, program: &Program) -> bool
 );
 crate::impl_javascript_parser_hook!(
   InlineConstPlugin,
   JavascriptParserEvaluateIdentifier,
   evaluate_identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32
@@ -124,7 +124,7 @@ crate::impl_javascript_parser_hook!(
   InlineConstPlugin,
   JavascriptParserPreDeclarator,
   pre_declarator(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     declarator: &VarDeclarator,
     declaration: VariableDeclaration<'_>
   ) -> bool

@@ -25,15 +25,15 @@ use crate::{
   parser_plugin::compatibility_plugin::{NESTED_IDENTIFIER_TAG, NestedRequireData},
   utils::object_properties::get_attributes,
   visitors::{
-    ExportDefaultDeclaration, ExportDefaultExpression, ExportImport, ExportLocal, JavascriptParser,
-    TagInfoData, create_traceable_error,
+    ExportDefaultDeclaration, ExportDefaultExpression, ExportImport, ExportLocal,
+    JavascriptParserState, TagInfoData, create_traceable_error,
   },
 };
 
 pub struct ESMExportDependencyParserPlugin;
 
 impl ESMExportDependencyParserPlugin {
-  fn export(&self, parser: &mut JavascriptParser, statement: ExportLocal) -> Option<bool> {
+  fn export(&self, parser: &mut JavascriptParserState, statement: ExportLocal) -> Option<bool> {
     let range = DependencyRange::from(statement.span());
     let loc = parser.to_dependency_location(range);
     let dep = ESMExportHeaderDependency::new(
@@ -47,7 +47,7 @@ impl ESMExportDependencyParserPlugin {
 
   fn export_import(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     statement: ExportImport,
     source: &Atom,
   ) -> Option<bool> {
@@ -79,7 +79,7 @@ impl ESMExportDependencyParserPlugin {
 
   fn export_specifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     statement: ExportLocal,
     local_id: &Atom,
     export_name: &Atom,
@@ -169,7 +169,7 @@ impl ESMExportDependencyParserPlugin {
 
   fn export_import_specifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     statement: ExportImport,
     source: &Atom,
     local_id: Option<&Atom>,
@@ -228,7 +228,7 @@ impl ESMExportDependencyParserPlugin {
 
   fn export_expression(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     statement: ExportDefaultDeclaration,
     expr: ExportDefaultExpression,
   ) -> Option<bool> {
@@ -298,18 +298,18 @@ impl ESMExportDependencyParserPlugin {
 crate::impl_javascript_parser_hook!(
   ESMExportDependencyParserPlugin,
   JavascriptParserExport,
-  export(parser: &mut JavascriptParser, statement: ExportLocal) -> bool
+  export(parser: &mut JavascriptParserState, statement: ExportLocal) -> bool
 );
 crate::impl_javascript_parser_hook!(
   ESMExportDependencyParserPlugin,
   JavascriptParserExportImport,
-  export_import(parser: &mut JavascriptParser, statement: ExportImport, source: &Atom) -> bool
+  export_import(parser: &mut JavascriptParserState, statement: ExportImport, source: &Atom) -> bool
 );
 crate::impl_javascript_parser_hook!(
   ESMExportDependencyParserPlugin,
   JavascriptParserExportSpecifier,
   export_specifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     statement: ExportLocal,
     local_id: &Atom,
     export_name: &Atom,
@@ -320,7 +320,7 @@ crate::impl_javascript_parser_hook!(
   ESMExportDependencyParserPlugin,
   JavascriptParserExportImportSpecifier,
   export_import_specifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     statement: ExportImport,
     source: &Atom,
     local_id: Option<&Atom>,
@@ -332,7 +332,7 @@ crate::impl_javascript_parser_hook!(
   ESMExportDependencyParserPlugin,
   JavascriptParserExportExpression,
   export_expression(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     statement: ExportDefaultDeclaration,
     expr: ExportDefaultExpression
   ) -> bool

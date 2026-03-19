@@ -5,7 +5,7 @@ use swc_core::{
   ecma::ast::{BinExpr, BinaryOp},
 };
 
-use crate::visitors::JavascriptParser;
+use crate::visitors::JavascriptParserState;
 
 pub fn is_logic_op(op: BinaryOp) -> bool {
   matches!(
@@ -14,7 +14,10 @@ pub fn is_logic_op(op: BinaryOp) -> bool {
   )
 }
 
-pub fn expression_logic_operator(scanner: &mut JavascriptParser, expr: &BinExpr) -> Option<bool> {
+pub fn expression_logic_operator(
+  scanner: &mut JavascriptParserState,
+  expr: &BinExpr,
+) -> Option<bool> {
   if expr.op == BinaryOp::LogicalAnd || expr.op == BinaryOp::LogicalOr {
     let param = scanner.evaluate_expression(&expr.left);
     let boolean = param.as_bool();

@@ -23,9 +23,7 @@ use rspack_core::{
 use rspack_error::{Diagnostic, Result};
 use rspack_hash::RspackHash;
 use rspack_hook::{plugin, plugin_hook};
-use rspack_plugin_javascript::{
-  BoxJavascriptParserPlugin, parser_and_generator::JavaScriptParser,
-};
+use rspack_plugin_javascript::{BoxJavascriptParserPlugin, parser_and_generator::JavaScriptParser};
 use rspack_plugin_runtime::GetChunkFilenameRuntimeModule;
 use rustc_hash::{FxHashMap, FxHashSet};
 use ustr::Ustr;

@@ -14,7 +14,7 @@ use rspack_plugin_javascript::{
     self,
     eval::{self},
   },
-  visitors::{JavascriptParser, Statement, VariableDeclaration, create_traceable_error},
+  visitors::{JavascriptParserState, Statement, VariableDeclaration, create_traceable_error},
 };
 use rspack_util::{SpanExt, atom::Atom, json_stringify_str, swc::get_swc_comments};
 use swc_core::{
@@ -74,7 +74,7 @@ trait JavascriptParserExt<'a> {
   fn handle_top_level_await(&mut self);
 }
 
-impl<'a> JavascriptParserExt<'a> for JavascriptParser<'a> {
+impl<'a> JavascriptParserExt<'a> for JavascriptParserState<'a> {
   fn handle_top_level_await(&mut self) {
     self.build_meta.has_top_level_await = true;
   }
@@ -87,7 +87,7 @@ impl RstestParserPlugin {
 
   fn process_require_actual(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
   ) -> Option<bool> {
     match call_expr.args.len() {
@@ -141,7 +141,7 @@ impl RstestParserPlugin {
 
   fn process_import_actual(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
   ) -> Option<bool> {
     match call_expr.args.len() {
@@ -222,7 +222,7 @@ impl RstestParserPlugin {
 
   fn handle_mock_first_arg(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     mock_call_expr: &CallExpr,
   ) -> Option<String> {
     let first_arg = &mock_call_expr.args[0];
@@ -262,7 +262,7 @@ impl RstestParserPlugin {
   #[allow(clippy::too_many_arguments)]
   fn process_mock(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     hoist: bool,
     is_esm: bool,
@@ -388,7 +388,7 @@ impl RstestParserPlugin {
 
   fn hoisted(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     statement_span: Option<Span>,
   ) -> Option<bool> {
@@ -430,7 +430,11 @@ impl RstestParserPlugin {
     }
   }
 
-  fn reset_modules(&self, parser: &mut JavascriptParser, call_expr: &CallExpr) -> Option<bool> {
+  fn reset_modules(
+    &self,
+    parser: &mut JavascriptParserState,
+    call_expr: &CallExpr,
+  ) -> Option<bool> {
     match call_expr.args.len() {
       0 => {
         parser.add_presentational_dependency(Box::new(ConstDependency::new(
@@ -460,7 +464,7 @@ impl RstestParserPlugin {
 
   fn load_mock(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     is_esm: bool,
   ) -> Option<bool> {
@@ -551,7 +555,11 @@ impl RstestParserPlugin {
     }
   }
 
-  fn process_import_meta(&self, parser: &mut JavascriptParser, r#type: ModulePathType) -> String {
+  fn process_import_meta(
+    &self,
+    parser: &mut JavascriptParserState,
+    r#type: ModulePathType,
+  ) -> String {
     if r#type == ModulePathType::FileName {
       if let Some(resource_path) = parser.resource_data.path() {
         json_stringify_str(resource_path.as_str())
@@ -579,7 +587,7 @@ impl RstestParserPlugin {
 
   fn handle_rstest_method_call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     ident: &Ident,
     prop: &swc_core::ecma::ast::IdentName,
@@ -658,7 +666,7 @@ impl RstestParserPlugin {
 impl RstestParserPlugin {
   fn declarator(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     _expr: &swc_core::ecma::ast::VarDeclarator,
     stmt: VariableDeclaration<'_>,
   ) -> Option<bool> {
@@ -691,7 +699,7 @@ impl RstestParserPlugin {
     None
   }
 
-  fn statement(&self, parser: &mut JavascriptParser, stmt: Statement) -> Option<bool> {
+  fn statement(&self, parser: &mut JavascriptParserState, stmt: Statement) -> Option<bool> {
     let call_expr = match stmt {
       Statement::Expr(expr_stmt) if expr_stmt.expr.as_call().is_some() => expr_stmt
         .expr
@@ -717,7 +725,7 @@ impl RstestParserPlugin {
 
   fn import_call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     _import_then: Option<&CallExpr>,
     _members: Option<(&[Atom], bool)>,
@@ -739,7 +747,7 @@ impl RstestParserPlugin {
 
   fn call_member_chain(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     for_name: &str,
     members: &[Atom],
@@ -781,7 +789,7 @@ impl RstestParserPlugin {
 
   fn identifier(
     &self,
-    parser: &mut rspack_plugin_javascript::visitors::JavascriptParser,
+    parser: &mut rspack_plugin_javascript::visitors::JavascriptParserState,
     _ident: &Ident,
     for_name: &str,
   ) -> Option<bool> {
@@ -808,7 +816,7 @@ impl RstestParserPlugin {
 
   fn evaluate_typeof<'a>(
     &self,
-    _parser: &mut JavascriptParser,
+    _parser: &mut JavascriptParserState,
     expr: &'a UnaryExpr,
     for_name: &str,
   ) -> Option<utils::eval::BasicEvaluatedExpression<'a>> {
@@ -826,7 +834,7 @@ impl RstestParserPlugin {
 
   fn evaluate_identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32,
@@ -853,7 +861,7 @@ impl RstestParserPlugin {
 
   fn r#typeof(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     unary_expr: &UnaryExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -874,7 +882,7 @@ impl RstestParserPlugin {
 
   fn member(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     member_expr: &MemberExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -908,7 +916,7 @@ struct RstestParserPluginTap(Arc<RstestParserPlugin>);
 impl JavascriptParserDeclarator for RstestParserPluginTap {
   fn run(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::VarDeclarator,
     stmt: VariableDeclaration<'_>,
   ) -> rspack_error::Result<Option<bool>> {
@@ -919,7 +927,7 @@ impl JavascriptParserDeclarator for RstestParserPluginTap {
 impl JavascriptParserStatement for RstestParserPluginTap {
   fn run(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     stmt: Statement,
   ) -> rspack_error::Result<Option<bool>> {
     Ok(self.0.statement(parser, stmt))
@@ -929,7 +937,7 @@ impl JavascriptParserStatement for RstestParserPluginTap {
 impl JavascriptParserImportCall for RstestParserPluginTap {
   fn run(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     import_then: Option<&CallExpr>,
     members: Option<(&[Atom], bool)>,
@@ -941,7 +949,7 @@ impl JavascriptParserImportCall for RstestParserPluginTap {
 impl JavascriptParserCallMemberChain for RstestParserPluginTap {
   fn run(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     for_name: &str,
     members: &[Atom],
@@ -962,7 +970,7 @@ impl JavascriptParserCallMemberChain for RstestParserPluginTap {
 impl JavascriptParserIdentifier for RstestParserPluginTap {
   fn run(
     &self,
-    parser: &mut rspack_plugin_javascript::visitors::JavascriptParser,
+    parser: &mut rspack_plugin_javascript::visitors::JavascriptParserState,
     ident: &Ident,
     for_name: &str,
   ) -> rspack_error::Result<Option<bool>> {
@@ -973,7 +981,7 @@ impl JavascriptParserIdentifier for RstestParserPluginTap {
 impl JavascriptParserEvaluateTypeof for RstestParserPluginTap {
   fn run<'a>(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a UnaryExpr,
     for_name: &str,
   ) -> rspack_error::Result<Option<utils::eval::BasicEvaluatedExpression<'a>>> {
@@ -984,7 +992,7 @@ impl JavascriptParserEvaluateTypeof for RstestParserPluginTap {
 impl JavascriptParserEvaluateIdentifier for RstestParserPluginTap {
   fn run(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32,
@@ -996,7 +1004,7 @@ impl JavascriptParserEvaluateIdentifier for RstestParserPluginTap {
 impl JavascriptParserTypeof for RstestParserPluginTap {
   fn run(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     unary_expr: &UnaryExpr,
     for_name: &str,
   ) -> rspack_error::Result<Option<bool>> {
@@ -1007,7 +1015,7 @@ impl JavascriptParserTypeof for RstestParserPluginTap {
 impl JavascriptParserMember for RstestParserPluginTap {
   fn run(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     member_expr: &MemberExpr,
     for_name: &str,
   ) -> rspack_error::Result<Option<bool>> {

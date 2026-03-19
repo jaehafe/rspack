@@ -18,7 +18,7 @@ use super::{
 use crate::{
   dependency::{RequireEnsureDependency, RequireEnsureItemDependency},
   utils::eval::{self, BasicEvaluatedExpression},
-  visitors::{JavascriptParser, Statement},
+  visitors::{JavascriptParserState, Statement},
 };
 
 pub struct RequireEnsureDependenciesBlockParserPlugin;
@@ -26,7 +26,7 @@ pub struct RequireEnsureDependenciesBlockParserPlugin;
 impl RequireEnsureDependenciesBlockParserPlugin {
   fn evaluate_typeof<'a>(
     &self,
-    _parser: &mut JavascriptParser,
+    _parser: &mut JavascriptParserState,
     expr: &'a UnaryExpr,
     for_name: &str,
   ) -> Option<BasicEvaluatedExpression<'a>> {
@@ -41,7 +41,7 @@ impl RequireEnsureDependenciesBlockParserPlugin {
 
   fn r#typeof(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::UnaryExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -54,7 +54,12 @@ impl RequireEnsureDependenciesBlockParserPlugin {
     })
   }
 
-  fn call(&self, parser: &mut JavascriptParser, expr: &CallExpr, for_name: &str) -> Option<bool> {
+  fn call(
+    &self,
+    parser: &mut JavascriptParserState,
+    expr: &CallExpr,
+    for_name: &str,
+  ) -> Option<bool> {
     if for_name != "require.ensure" {
       return None;
     }
@@ -176,7 +181,7 @@ crate::impl_javascript_parser_hook!(
   JavascriptParserEvaluateTypeof,
   <'a>,
   evaluate_typeof(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a UnaryExpr,
     for_name: &str
   ) -> BasicEvaluatedExpression<'a>
@@ -185,7 +190,7 @@ crate::impl_javascript_parser_hook!(
   RequireEnsureDependenciesBlockParserPlugin,
   JavascriptParserTypeof,
   r#typeof(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::UnaryExpr,
     for_name: &str
   ) -> bool
@@ -193,7 +198,7 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   RequireEnsureDependenciesBlockParserPlugin,
   JavascriptParserCall,
-  call(parser: &mut JavascriptParser, expr: &CallExpr, for_name: &str) -> bool
+  call(parser: &mut JavascriptParserState, expr: &CallExpr, for_name: &str) -> bool
 );
 
 impl JavascriptParserPlugin for RequireEnsureDependenciesBlockParserPlugin {

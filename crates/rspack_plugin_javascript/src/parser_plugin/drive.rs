@@ -12,285 +12,285 @@ use crate::{
   utils::eval::BasicEvaluatedExpression,
   visitors::{
     ClassDeclOrExpr, DestructuringAssignmentProperty, ExportDefaultDeclaration,
-    ExportDefaultExpression, ExportImport, ExportLocal, ExportedVariableInfo, JavascriptParser,
-    Statement, VariableDeclaration,
+    ExportDefaultExpression, ExportImport, ExportLocal, ExportedVariableInfo,
+    JavascriptParserState, Statement, VariableDeclaration,
   },
 };
 
 define_parser_sync_bail_hook!(
   JavascriptParserPreStatement,
   JavascriptParserPreStatementHook,
-  (parser: &mut JavascriptParser, stmt: Statement) -> bool
+  (parser: &mut JavascriptParserState, stmt: Statement) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserBlockPreStatement,
   JavascriptParserBlockPreStatementHook,
-  (parser: &mut JavascriptParser, stmt: Statement) -> bool
+  (parser: &mut JavascriptParserState, stmt: Statement) -> bool
 );
 define_parser_sync_hook!(
   JavascriptParserTopLevelAwaitExpr,
   JavascriptParserTopLevelAwaitExprHook,
-  (parser: &mut JavascriptParser, expr: &swc_core::ecma::ast::AwaitExpr)
+  (parser: &mut JavascriptParserState, expr: &swc_core::ecma::ast::AwaitExpr)
 );
 define_parser_sync_hook!(
   JavascriptParserTopLevelForOfAwaitStmt,
   JavascriptParserTopLevelForOfAwaitStmtHook,
-  (parser: &mut JavascriptParser, stmt: &swc_core::ecma::ast::ForOfStmt)
+  (parser: &mut JavascriptParserState, stmt: &swc_core::ecma::ast::ForOfStmt)
 );
 define_parser_sync_bail_hook!(
   JavascriptParserCanRename,
   JavascriptParserCanRenameHook,
-  (parser: &mut JavascriptParser, name: &str) -> bool
+  (parser: &mut JavascriptParserState, name: &str) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserRename,
   JavascriptParserRenameHook,
-  (parser: &mut JavascriptParser, expr: &Expr, name: &str) -> bool
+  (parser: &mut JavascriptParserState, expr: &Expr, name: &str) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserProgram,
   JavascriptParserProgramHook,
-  (parser: &mut JavascriptParser, ast: &swc_core::ecma::ast::Program) -> bool
+  (parser: &mut JavascriptParserState, ast: &swc_core::ecma::ast::Program) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserStatement,
   JavascriptParserStatementHook,
-  (parser: &mut JavascriptParser, stmt: Statement) -> bool
+  (parser: &mut JavascriptParserState, stmt: Statement) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserUnusedStatement,
   JavascriptParserUnusedStatementHook,
-  (parser: &mut JavascriptParser, stmt: Statement) -> bool
+  (parser: &mut JavascriptParserState, stmt: Statement) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserModuleDeclaration,
   JavascriptParserModuleDeclarationHook,
-  (parser: &mut JavascriptParser, decl: &swc_core::ecma::ast::ModuleDecl) -> bool
+  (parser: &mut JavascriptParserState, decl: &swc_core::ecma::ast::ModuleDecl) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserBlockPreModuleDeclaration,
   JavascriptParserBlockPreModuleDeclarationHook,
-  (parser: &mut JavascriptParser, decl: &swc_core::ecma::ast::ModuleDecl) -> bool
+  (parser: &mut JavascriptParserState, decl: &swc_core::ecma::ast::ModuleDecl) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserPreDeclarator,
   JavascriptParserPreDeclaratorHook,
-  (parser: &mut JavascriptParser, declarator: &VarDeclarator, declaration: VariableDeclaration<'_>) -> bool
+  (parser: &mut JavascriptParserState, declarator: &VarDeclarator, declaration: VariableDeclaration<'_>) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserEvaluateIdentifier,
   JavascriptParserEvaluateIdentifierHook,
-  (parser: &mut JavascriptParser, for_name: &str, start: u32, end: u32) -> BasicEvaluatedExpression<'static>
+  (parser: &mut JavascriptParserState, for_name: &str, start: u32, end: u32) -> BasicEvaluatedExpression<'static>
 );
 define_parser_sync_bail_hook!(
   JavascriptParserCanCollectDestructuringAssignmentProperties,
   JavascriptParserCanCollectDestructuringAssignmentPropertiesHook,
-  (parser: &mut JavascriptParser, expr: &Expr) -> bool
+  (parser: &mut JavascriptParserState, expr: &Expr) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserPattern,
   JavascriptParserPatternHook,
-  (parser: &mut JavascriptParser, ident: &swc_core::ecma::ast::Ident, for_name: &str) -> bool
+  (parser: &mut JavascriptParserState, ident: &swc_core::ecma::ast::Ident, for_name: &str) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserCall,
   JavascriptParserCallHook,
-  (parser: &mut JavascriptParser, expr: &CallExpr, for_name: &str) -> bool
+  (parser: &mut JavascriptParserState, expr: &CallExpr, for_name: &str) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserCallMemberChain,
   JavascriptParserCallMemberChainHook,
-  (parser: &mut JavascriptParser, expr: &CallExpr, for_name: &str, members: &[Atom], members_optionals: &[bool], member_ranges: &[Span]) -> bool
+  (parser: &mut JavascriptParserState, expr: &CallExpr, for_name: &str, members: &[Atom], members_optionals: &[bool], member_ranges: &[Span]) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserMember,
   JavascriptParserMemberHook,
-  (parser: &mut JavascriptParser, expr: &swc_core::ecma::ast::MemberExpr, for_name: &str) -> bool
+  (parser: &mut JavascriptParserState, expr: &swc_core::ecma::ast::MemberExpr, for_name: &str) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserMemberChain,
   JavascriptParserMemberChainHook,
-  (parser: &mut JavascriptParser, expr: &swc_core::ecma::ast::MemberExpr, for_name: &str, members: &[Atom], members_optionals: &[bool], member_ranges: &[Span]) -> bool
+  (parser: &mut JavascriptParserState, expr: &swc_core::ecma::ast::MemberExpr, for_name: &str, members: &[Atom], members_optionals: &[bool], member_ranges: &[Span]) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserUnhandledExpressionMemberChain,
   JavascriptParserUnhandledExpressionMemberChainHook,
-  (parser: &mut JavascriptParser, root_info: &ExportedVariableInfo, expr: &MemberExpr) -> bool
+  (parser: &mut JavascriptParserState, root_info: &ExportedVariableInfo, expr: &MemberExpr) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserMemberChainOfCallMemberChain,
   JavascriptParserMemberChainOfCallMemberChainHook,
-  (parser: &mut JavascriptParser, member_expr: &MemberExpr, callee_members: &[Atom], call_expr: &CallExpr, members: &[Atom], member_ranges: &[Span], for_name: &str) -> bool
+  (parser: &mut JavascriptParserState, member_expr: &MemberExpr, callee_members: &[Atom], call_expr: &CallExpr, members: &[Atom], member_ranges: &[Span], for_name: &str) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserCallMemberChainOfCallMemberChain,
   JavascriptParserCallMemberChainOfCallMemberChainHook,
-  (parser: &mut JavascriptParser, call_expr: &CallExpr, callee_members: &[Atom], inner_call_expr: &CallExpr, members: &[Atom], member_ranges: &[Span], for_name: &str) -> bool
+  (parser: &mut JavascriptParserState, call_expr: &CallExpr, callee_members: &[Atom], inner_call_expr: &CallExpr, members: &[Atom], member_ranges: &[Span], for_name: &str) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserTypeof,
   JavascriptParserTypeofHook,
-  (parser: &mut JavascriptParser, expr: &UnaryExpr, for_name: &str) -> bool
+  (parser: &mut JavascriptParserState, expr: &UnaryExpr, for_name: &str) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserExpressionLogicalOperator,
   JavascriptParserExpressionLogicalOperatorHook,
-  (parser: &mut JavascriptParser, expr: &BinExpr) -> bool
+  (parser: &mut JavascriptParserState, expr: &BinExpr) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserBinaryExpression,
   JavascriptParserBinaryExpressionHook,
-  (parser: &mut JavascriptParser, expr: &BinExpr) -> bool
+  (parser: &mut JavascriptParserState, expr: &BinExpr) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserStatementIf,
   JavascriptParserStatementIfHook,
-  (parser: &mut JavascriptParser, expr: &IfStmt) -> bool
+  (parser: &mut JavascriptParserState, expr: &IfStmt) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserClassExtendsExpression,
   JavascriptParserClassExtendsExpressionHook,
-  (parser: &mut JavascriptParser, super_class: &Expr, class_decl_or_expr: ClassDeclOrExpr) -> bool
+  (parser: &mut JavascriptParserState, super_class: &Expr, class_decl_or_expr: ClassDeclOrExpr) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserClassBodyElement,
   JavascriptParserClassBodyElementHook,
-  (parser: &mut JavascriptParser, element: &ClassMember, class_decl_or_expr: ClassDeclOrExpr) -> bool
+  (parser: &mut JavascriptParserState, element: &ClassMember, class_decl_or_expr: ClassDeclOrExpr) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserClassBodyValue,
   JavascriptParserClassBodyValueHook,
-  (parser: &mut JavascriptParser, element: &ClassMember, expr_span: Span, class_decl_or_expr: ClassDeclOrExpr) -> bool
+  (parser: &mut JavascriptParserState, element: &ClassMember, expr_span: Span, class_decl_or_expr: ClassDeclOrExpr) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserDeclarator,
   JavascriptParserDeclaratorHook,
-  (parser: &mut JavascriptParser, expr: &VarDeclarator, stmt: VariableDeclaration<'_>) -> bool
+  (parser: &mut JavascriptParserState, expr: &VarDeclarator, stmt: VariableDeclaration<'_>) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserNewExpression,
   JavascriptParserNewExpressionHook,
-  (parser: &mut JavascriptParser, expr: &swc_core::ecma::ast::NewExpr, for_name: &str) -> bool
+  (parser: &mut JavascriptParserState, expr: &swc_core::ecma::ast::NewExpr, for_name: &str) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserIdentifier,
   JavascriptParserIdentifierHook,
-  (parser: &mut JavascriptParser, ident: &swc_core::ecma::ast::Ident, for_name: &str) -> bool
+  (parser: &mut JavascriptParserState, ident: &swc_core::ecma::ast::Ident, for_name: &str) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserThis,
   JavascriptParserThisHook,
-  (parser: &mut JavascriptParser, expr: &swc_core::ecma::ast::ThisExpr, for_name: &str) -> bool
+  (parser: &mut JavascriptParserState, expr: &swc_core::ecma::ast::ThisExpr, for_name: &str) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserAssign,
   JavascriptParserAssignHook,
-  (parser: &mut JavascriptParser, expr: &AssignExpr, for_name: &str) -> bool
+  (parser: &mut JavascriptParserState, expr: &AssignExpr, for_name: &str) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserAssignMemberChain,
   JavascriptParserAssignMemberChainHook,
-  (parser: &mut JavascriptParser, expr: &AssignExpr, members: &[Atom], for_name: &str) -> bool
+  (parser: &mut JavascriptParserState, expr: &AssignExpr, members: &[Atom], for_name: &str) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserImportCall,
   JavascriptParserImportCallHook,
-  (parser: &mut JavascriptParser, expr: &CallExpr, import_then: Option<&CallExpr>, members: Option<(&[Atom], bool)>) -> bool
+  (parser: &mut JavascriptParserState, expr: &CallExpr, import_then: Option<&CallExpr>, members: Option<(&[Atom], bool)>) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserMetaProperty,
   JavascriptParserMetaPropertyHook,
-  (parser: &mut JavascriptParser, root_name: &Atom, span: Span) -> bool
+  (parser: &mut JavascriptParserState, root_name: &Atom, span: Span) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserImport,
   JavascriptParserImportHook,
-  (parser: &mut JavascriptParser, statement: &swc_core::ecma::ast::ImportDecl, source: &str) -> bool
+  (parser: &mut JavascriptParserState, statement: &swc_core::ecma::ast::ImportDecl, source: &str) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserImportSpecifier,
   JavascriptParserImportSpecifierHook,
-  (parser: &mut JavascriptParser, statement: &swc_core::ecma::ast::ImportDecl, source: &swc_core::atoms::Atom, export_name: Option<&Atom>, identifier_name: &Atom) -> bool
+  (parser: &mut JavascriptParserState, statement: &swc_core::ecma::ast::ImportDecl, source: &swc_core::atoms::Atom, export_name: Option<&Atom>, identifier_name: &Atom) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserExportImport,
   JavascriptParserExportImportHook,
-  (parser: &mut JavascriptParser, statement: ExportImport, source: &Atom) -> bool
+  (parser: &mut JavascriptParserState, statement: ExportImport, source: &Atom) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserExport,
   JavascriptParserExportHook,
-  (parser: &mut JavascriptParser, statement: ExportLocal) -> bool
+  (parser: &mut JavascriptParserState, statement: ExportLocal) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserExportImportSpecifier,
   JavascriptParserExportImportSpecifierHook,
-  (parser: &mut JavascriptParser, statement: ExportImport, source: &Atom, local_id: Option<&Atom>, export_name: Option<&Atom>, export_name_span: Option<Span>) -> bool
+  (parser: &mut JavascriptParserState, statement: ExportImport, source: &Atom, local_id: Option<&Atom>, export_name: Option<&Atom>, export_name_span: Option<Span>) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserExportSpecifier,
   JavascriptParserExportSpecifierHook,
-  (parser: &mut JavascriptParser, statement: ExportLocal, local_id: &Atom, export_name: &Atom, export_name_span: Span) -> bool
+  (parser: &mut JavascriptParserState, statement: ExportLocal, local_id: &Atom, export_name: &Atom, export_name_span: Span) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserExportExpression,
   JavascriptParserExportExpressionHook,
-  (parser: &mut JavascriptParser, statement: ExportDefaultDeclaration, expr: ExportDefaultExpression) -> bool
+  (parser: &mut JavascriptParserState, statement: ExportDefaultDeclaration, expr: ExportDefaultExpression) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserOptionalChaining,
   JavascriptParserOptionalChainingHook,
-  (parser: &mut JavascriptParser, expr: &OptChainExpr) -> bool
+  (parser: &mut JavascriptParserState, expr: &OptChainExpr) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserExpressionConditionalOperation,
   JavascriptParserExpressionConditionalOperationHook,
-  (parser: &mut JavascriptParser, expr: &CondExpr) -> bool
+  (parser: &mut JavascriptParserState, expr: &CondExpr) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserFinish,
   JavascriptParserFinishHook,
-  (parser: &mut JavascriptParser) -> bool
+  (parser: &mut JavascriptParserState) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserIsPure,
   JavascriptParserIsPureHook,
-  (parser: &mut JavascriptParser, expr: &Expr) -> bool
+  (parser: &mut JavascriptParserState, expr: &Expr) -> bool
 );
 define_parser_sync_bail_hook!(
   JavascriptParserImportMetaPropertyInDestructuring,
   JavascriptParserImportMetaPropertyInDestructuringHook,
-  (parser: &mut JavascriptParser, property: &DestructuringAssignmentProperty) -> String
+  (parser: &mut JavascriptParserState, property: &DestructuringAssignmentProperty) -> String
 );
 define_parser_sync_bail_hook!(
   JavascriptParserEvaluate,
   JavascriptParserEvaluateHook,
   <'a>,
-  (parser: &mut JavascriptParser, expr: &'a Expr) -> BasicEvaluatedExpression<'a>
+  (parser: &mut JavascriptParserState, expr: &'a Expr) -> BasicEvaluatedExpression<'a>
 );
 define_parser_sync_bail_hook!(
   JavascriptParserEvaluateTypeof,
   JavascriptParserEvaluateTypeofHook,
   <'a>,
-  (parser: &mut JavascriptParser, expr: &'a UnaryExpr, for_name: &str) -> BasicEvaluatedExpression<'a>
+  (parser: &mut JavascriptParserState, expr: &'a UnaryExpr, for_name: &str) -> BasicEvaluatedExpression<'a>
 );
 define_parser_sync_bail_hook!(
   JavascriptParserEvaluateTypeofAny,
   JavascriptParserEvaluateTypeofAnyHook,
   <'a>,
-  (parser: &mut JavascriptParser, expr: &'a UnaryExpr, for_name: &str) -> BasicEvaluatedExpression<'a>
+  (parser: &mut JavascriptParserState, expr: &'a UnaryExpr, for_name: &str) -> BasicEvaluatedExpression<'a>
 );
 define_parser_sync_bail_hook!(
   JavascriptParserEvaluateCallExpression,
   JavascriptParserEvaluateCallExpressionHook,
   <'a>,
-  (parser: &mut JavascriptParser, name: &str, expr: &'a CallExpr) -> BasicEvaluatedExpression<'a>
+  (parser: &mut JavascriptParserState, name: &str, expr: &'a CallExpr) -> BasicEvaluatedExpression<'a>
 );
 
 pub trait JavascriptParserEvaluateCallExpressionMember {
   fn run<'a>(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     property: &str,
     expr: &'a CallExpr,
     param: BasicEvaluatedExpression<'a>,
@@ -312,7 +312,7 @@ impl JavascriptParserEvaluateCallExpressionMemberHook {
   #[inline]
   pub fn call<'a>(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     property: &str,
     expr: &'a CallExpr,
     param: BasicEvaluatedExpression<'a>,
@@ -433,61 +433,61 @@ pub struct JavascriptParserHooks {
 }
 
 impl JavascriptParserHooks {
-  call_sync!(top_level_await_expr(parser: &mut JavascriptParser, expr: &swc_core::ecma::ast::AwaitExpr));
-  call_sync!(top_level_for_of_await_stmt(parser: &mut JavascriptParser, stmt: &swc_core::ecma::ast::ForOfStmt));
+  call_sync!(top_level_await_expr(parser: &mut JavascriptParserState, expr: &swc_core::ecma::ast::AwaitExpr));
+  call_sync!(top_level_for_of_await_stmt(parser: &mut JavascriptParserState, stmt: &swc_core::ecma::ast::ForOfStmt));
 
-  call_sync_bail!(program(parser: &mut JavascriptParser, ast: &swc_core::ecma::ast::Program) -> bool);
-  call_sync_bail!(finish(parser: &mut JavascriptParser) -> bool);
-  call_sync_bail!(block_pre_module_declaration(parser: &mut JavascriptParser, decl: &swc_core::ecma::ast::ModuleDecl) -> bool);
-  call_sync_bail!(module_declaration(parser: &mut JavascriptParser, decl: &swc_core::ecma::ast::ModuleDecl) -> bool);
-  call_sync_bail!(can_collect_destructuring_assignment_properties(parser: &mut JavascriptParser, expr: &Expr) -> bool);
-  call_sync_bail!(unhandled_expression_member_chain(parser: &mut JavascriptParser, root_info: &ExportedVariableInfo, expr: &MemberExpr) -> bool);
-  call_sync_bail!(expression_logical_operator(parser: &mut JavascriptParser, expr: &BinExpr) -> bool);
-  call_sync_bail!(binary_expression(parser: &mut JavascriptParser, expr: &BinExpr) -> bool);
-  call_sync_bail!(statement(parser: &mut JavascriptParser, stmt: Statement) -> bool);
-  call_sync_bail!(unused_statement(parser: &mut JavascriptParser, stmt: Statement) -> bool);
-  call_sync_bail!(statement_if(parser: &mut JavascriptParser, expr: &IfStmt) -> bool);
-  call_sync_bail!(declarator(parser: &mut JavascriptParser, expr: &VarDeclarator, stmt: VariableDeclaration<'_>) -> bool);
-  call_sync_bail!(class_extends_expression(parser: &mut JavascriptParser, super_class: &Expr, class_decl_or_expr: ClassDeclOrExpr) -> bool);
-  call_sync_bail!(class_body_element(parser: &mut JavascriptParser, element: &ClassMember, class_decl_or_expr: ClassDeclOrExpr) -> bool);
-  call_sync_bail!(class_body_value(parser: &mut JavascriptParser, element: &ClassMember, expr_span: Span, class_decl_or_expr: ClassDeclOrExpr) -> bool);
-  call_sync_bail!(pre_declarator(parser: &mut JavascriptParser, declarator: &VarDeclarator, declaration: VariableDeclaration<'_>) -> bool);
-  call_sync_bail!(pre_statement(parser: &mut JavascriptParser, stmt: Statement) -> bool);
-  call_sync_bail!(block_pre_statement(parser: &mut JavascriptParser, stmt: Statement) -> bool);
-  call_sync_bail!(import_call(parser: &mut JavascriptParser, expr: &CallExpr, import_then: Option<&CallExpr>, members: Option<(&[Atom], bool)>) -> bool);
-  call_sync_bail!(meta_property(parser: &mut JavascriptParser, root_name: &Atom, span: Span) -> bool);
-  call_sync_bail!(import(parser: &mut JavascriptParser, statement: &swc_core::ecma::ast::ImportDecl, source: &str) -> bool);
-  call_sync_bail!(import_specifier(parser: &mut JavascriptParser, statement: &swc_core::ecma::ast::ImportDecl, source: &swc_core::atoms::Atom, export_name: Option<&Atom>, identifier_name: &Atom) -> bool);
-  call_sync_bail!(export_import(parser: &mut JavascriptParser, statement: ExportImport, source: &Atom) -> bool);
-  call_sync_bail!(export(parser: &mut JavascriptParser, statement: ExportLocal) -> bool);
-  call_sync_bail!(export_import_specifier(parser: &mut JavascriptParser, statement: ExportImport, source: &Atom, local_id: Option<&Atom>, export_name: Option<&Atom>, export_name_span: Option<Span>) -> bool);
-  call_sync_bail!(export_specifier(parser: &mut JavascriptParser, statement: ExportLocal, local_id: &Atom, export_name: &Atom, export_name_span: Span) -> bool);
-  call_sync_bail!(export_expression(parser: &mut JavascriptParser, statement: ExportDefaultDeclaration, expr: ExportDefaultExpression) -> bool);
-  call_sync_bail!(optional_chaining(parser: &mut JavascriptParser, expr: &OptChainExpr) -> bool);
-  call_sync_bail!(expression_conditional_operation(parser: &mut JavascriptParser, expr: &CondExpr) -> bool);
-  call_sync_bail!(is_pure(parser: &mut JavascriptParser, expr: &Expr) -> bool);
-  call_sync_bail!(import_meta_property_in_destructuring(parser: &mut JavascriptParser, property: &DestructuringAssignmentProperty) -> String);
+  call_sync_bail!(program(parser: &mut JavascriptParserState, ast: &swc_core::ecma::ast::Program) -> bool);
+  call_sync_bail!(finish(parser: &mut JavascriptParserState) -> bool);
+  call_sync_bail!(block_pre_module_declaration(parser: &mut JavascriptParserState, decl: &swc_core::ecma::ast::ModuleDecl) -> bool);
+  call_sync_bail!(module_declaration(parser: &mut JavascriptParserState, decl: &swc_core::ecma::ast::ModuleDecl) -> bool);
+  call_sync_bail!(can_collect_destructuring_assignment_properties(parser: &mut JavascriptParserState, expr: &Expr) -> bool);
+  call_sync_bail!(unhandled_expression_member_chain(parser: &mut JavascriptParserState, root_info: &ExportedVariableInfo, expr: &MemberExpr) -> bool);
+  call_sync_bail!(expression_logical_operator(parser: &mut JavascriptParserState, expr: &BinExpr) -> bool);
+  call_sync_bail!(binary_expression(parser: &mut JavascriptParserState, expr: &BinExpr) -> bool);
+  call_sync_bail!(statement(parser: &mut JavascriptParserState, stmt: Statement) -> bool);
+  call_sync_bail!(unused_statement(parser: &mut JavascriptParserState, stmt: Statement) -> bool);
+  call_sync_bail!(statement_if(parser: &mut JavascriptParserState, expr: &IfStmt) -> bool);
+  call_sync_bail!(declarator(parser: &mut JavascriptParserState, expr: &VarDeclarator, stmt: VariableDeclaration<'_>) -> bool);
+  call_sync_bail!(class_extends_expression(parser: &mut JavascriptParserState, super_class: &Expr, class_decl_or_expr: ClassDeclOrExpr) -> bool);
+  call_sync_bail!(class_body_element(parser: &mut JavascriptParserState, element: &ClassMember, class_decl_or_expr: ClassDeclOrExpr) -> bool);
+  call_sync_bail!(class_body_value(parser: &mut JavascriptParserState, element: &ClassMember, expr_span: Span, class_decl_or_expr: ClassDeclOrExpr) -> bool);
+  call_sync_bail!(pre_declarator(parser: &mut JavascriptParserState, declarator: &VarDeclarator, declaration: VariableDeclaration<'_>) -> bool);
+  call_sync_bail!(pre_statement(parser: &mut JavascriptParserState, stmt: Statement) -> bool);
+  call_sync_bail!(block_pre_statement(parser: &mut JavascriptParserState, stmt: Statement) -> bool);
+  call_sync_bail!(import_call(parser: &mut JavascriptParserState, expr: &CallExpr, import_then: Option<&CallExpr>, members: Option<(&[Atom], bool)>) -> bool);
+  call_sync_bail!(meta_property(parser: &mut JavascriptParserState, root_name: &Atom, span: Span) -> bool);
+  call_sync_bail!(import(parser: &mut JavascriptParserState, statement: &swc_core::ecma::ast::ImportDecl, source: &str) -> bool);
+  call_sync_bail!(import_specifier(parser: &mut JavascriptParserState, statement: &swc_core::ecma::ast::ImportDecl, source: &swc_core::atoms::Atom, export_name: Option<&Atom>, identifier_name: &Atom) -> bool);
+  call_sync_bail!(export_import(parser: &mut JavascriptParserState, statement: ExportImport, source: &Atom) -> bool);
+  call_sync_bail!(export(parser: &mut JavascriptParserState, statement: ExportLocal) -> bool);
+  call_sync_bail!(export_import_specifier(parser: &mut JavascriptParserState, statement: ExportImport, source: &Atom, local_id: Option<&Atom>, export_name: Option<&Atom>, export_name_span: Option<Span>) -> bool);
+  call_sync_bail!(export_specifier(parser: &mut JavascriptParserState, statement: ExportLocal, local_id: &Atom, export_name: &Atom, export_name_span: Span) -> bool);
+  call_sync_bail!(export_expression(parser: &mut JavascriptParserState, statement: ExportDefaultDeclaration, expr: ExportDefaultExpression) -> bool);
+  call_sync_bail!(optional_chaining(parser: &mut JavascriptParserState, expr: &OptChainExpr) -> bool);
+  call_sync_bail!(expression_conditional_operation(parser: &mut JavascriptParserState, expr: &CondExpr) -> bool);
+  call_sync_bail!(is_pure(parser: &mut JavascriptParserState, expr: &Expr) -> bool);
+  call_sync_bail!(import_meta_property_in_destructuring(parser: &mut JavascriptParserState, property: &DestructuringAssignmentProperty) -> String);
 
-  call_sync_bail_map!(member(parser: &mut JavascriptParser, expr: &swc_core::ecma::ast::MemberExpr, for_name: &str), for_name -> bool);
-  call_sync_bail_map!(member_chain(parser: &mut JavascriptParser, expr: &swc_core::ecma::ast::MemberExpr, for_name: &str, members: &[Atom], members_optionals: &[bool], member_ranges: &[Span]), for_name -> bool);
-  call_sync_bail_map!(call_member_chain(parser: &mut JavascriptParser, expr: &CallExpr, for_name: &str, members: &[Atom], members_optionals: &[bool], member_ranges: &[Span]), for_name -> bool);
-  call_sync_bail_map!(member_chain_of_call_member_chain(parser: &mut JavascriptParser, member_expr: &MemberExpr, callee_members: &[Atom], call_expr: &CallExpr, members: &[Atom], member_ranges: &[Span], for_name: &str), for_name -> bool);
-  call_sync_bail_map!(call_member_chain_of_call_member_chain(parser: &mut JavascriptParser, call_expr: &CallExpr, callee_members: &[Atom], inner_call_expr: &CallExpr, members: &[Atom], member_ranges: &[Span], for_name: &str), for_name -> bool);
-  call_sync_bail_map!(assign(parser: &mut JavascriptParser, expr: &AssignExpr, for_name: &str), for_name -> bool);
-  call_sync_bail_map!(assign_member_chain(parser: &mut JavascriptParser, expr: &AssignExpr, members: &[Atom], for_name: &str), for_name -> bool);
-  call_sync_bail_map!(r#typeof(parser: &mut JavascriptParser, expr: &UnaryExpr, for_name: &str), for_name -> bool);
-  call_sync_bail_map!(new_expression(parser: &mut JavascriptParser, expr: &swc_core::ecma::ast::NewExpr, for_name: &str), for_name -> bool);
-  call_sync_bail_map!(identifier(parser: &mut JavascriptParser, ident: &swc_core::ecma::ast::Ident, for_name: &str), for_name -> bool);
-  call_sync_bail_map!(this(parser: &mut JavascriptParser, expr: &swc_core::ecma::ast::ThisExpr, for_name: &str), for_name -> bool);
-  call_sync_bail_map!(evaluate_identifier(parser: &mut JavascriptParser, for_name: &str, start: u32, end: u32), for_name -> BasicEvaluatedExpression<'static>);
-  call_sync_bail_map!(pattern(parser: &mut JavascriptParser, ident: &swc_core::ecma::ast::Ident, for_name: &str), for_name -> bool);
-  call_sync_bail_map!(call(parser: &mut JavascriptParser, expr: &CallExpr, for_name: &str), for_name -> bool);
-  call_sync_bail_map!(can_rename(parser: &mut JavascriptParser, for_name: &str), for_name -> bool);
-  call_sync_bail_map!(rename(parser: &mut JavascriptParser, expr: &Expr, for_name: &str), for_name -> bool);
+  call_sync_bail_map!(member(parser: &mut JavascriptParserState, expr: &swc_core::ecma::ast::MemberExpr, for_name: &str), for_name -> bool);
+  call_sync_bail_map!(member_chain(parser: &mut JavascriptParserState, expr: &swc_core::ecma::ast::MemberExpr, for_name: &str, members: &[Atom], members_optionals: &[bool], member_ranges: &[Span]), for_name -> bool);
+  call_sync_bail_map!(call_member_chain(parser: &mut JavascriptParserState, expr: &CallExpr, for_name: &str, members: &[Atom], members_optionals: &[bool], member_ranges: &[Span]), for_name -> bool);
+  call_sync_bail_map!(member_chain_of_call_member_chain(parser: &mut JavascriptParserState, member_expr: &MemberExpr, callee_members: &[Atom], call_expr: &CallExpr, members: &[Atom], member_ranges: &[Span], for_name: &str), for_name -> bool);
+  call_sync_bail_map!(call_member_chain_of_call_member_chain(parser: &mut JavascriptParserState, call_expr: &CallExpr, callee_members: &[Atom], inner_call_expr: &CallExpr, members: &[Atom], member_ranges: &[Span], for_name: &str), for_name -> bool);
+  call_sync_bail_map!(assign(parser: &mut JavascriptParserState, expr: &AssignExpr, for_name: &str), for_name -> bool);
+  call_sync_bail_map!(assign_member_chain(parser: &mut JavascriptParserState, expr: &AssignExpr, members: &[Atom], for_name: &str), for_name -> bool);
+  call_sync_bail_map!(r#typeof(parser: &mut JavascriptParserState, expr: &UnaryExpr, for_name: &str), for_name -> bool);
+  call_sync_bail_map!(new_expression(parser: &mut JavascriptParserState, expr: &swc_core::ecma::ast::NewExpr, for_name: &str), for_name -> bool);
+  call_sync_bail_map!(identifier(parser: &mut JavascriptParserState, ident: &swc_core::ecma::ast::Ident, for_name: &str), for_name -> bool);
+  call_sync_bail_map!(this(parser: &mut JavascriptParserState, expr: &swc_core::ecma::ast::ThisExpr, for_name: &str), for_name -> bool);
+  call_sync_bail_map!(evaluate_identifier(parser: &mut JavascriptParserState, for_name: &str, start: u32, end: u32), for_name -> BasicEvaluatedExpression<'static>);
+  call_sync_bail_map!(pattern(parser: &mut JavascriptParserState, ident: &swc_core::ecma::ast::Ident, for_name: &str), for_name -> bool);
+  call_sync_bail_map!(call(parser: &mut JavascriptParserState, expr: &CallExpr, for_name: &str), for_name -> bool);
+  call_sync_bail_map!(can_rename(parser: &mut JavascriptParserState, for_name: &str), for_name -> bool);
+  call_sync_bail_map!(rename(parser: &mut JavascriptParserState, expr: &Expr, for_name: &str), for_name -> bool);
 
   pub fn evaluate<'a>(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a Expr,
   ) -> Option<BasicEvaluatedExpression<'a>> {
     self
@@ -498,7 +498,7 @@ impl JavascriptParserHooks {
 
   pub fn evaluate_call_expression<'a>(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     name: &str,
     expr: &'a CallExpr,
   ) -> Option<BasicEvaluatedExpression<'a>> {
@@ -510,7 +510,7 @@ impl JavascriptParserHooks {
 
   pub fn evaluate_call_expression_member<'a>(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     property: &str,
     expr: &'a CallExpr,
     param: BasicEvaluatedExpression<'a>,
@@ -523,7 +523,7 @@ impl JavascriptParserHooks {
 
   pub fn evaluate_typeof<'a>(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a UnaryExpr,
     for_name: &str,
   ) -> Option<BasicEvaluatedExpression<'a>> {
@@ -547,7 +547,7 @@ impl JavascriptParserHooks {
 impl JavascriptParserHooks {
   pub fn call_member_chain_from_call_expr(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &CallExpr,
     for_name: &str,
     members: &[Atom],

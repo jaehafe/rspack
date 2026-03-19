@@ -15,7 +15,7 @@ use super::{
 };
 use crate::{
   utils::eval::evaluate_to_string,
-  visitors::{JavascriptParser, Statement},
+  visitors::{JavascriptParserState, Statement},
 };
 
 pub struct ConstPlugin;
@@ -26,7 +26,7 @@ const RESOURCE_QUERY: &str = "__resourceQuery";
 impl ConstPlugin {
   fn expression_logical_operator(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::BinExpr,
   ) -> Option<bool> {
     self::logic_expr::expression_logic_operator(parser, expr)
@@ -34,7 +34,7 @@ impl ConstPlugin {
 
   fn expression_conditional_operation(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expression: &swc_core::ecma::ast::CondExpr,
   ) -> Option<bool> {
     let param = parser.evaluate_expression(&expression.test);
@@ -66,7 +66,7 @@ impl ConstPlugin {
 
   fn statement_if(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::IfStmt,
   ) -> Option<bool> {
     self::if_stmt::statement_if(parser, expr)
@@ -74,7 +74,7 @@ impl ConstPlugin {
 
   fn identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &swc_core::ecma::ast::Ident,
     for_name: &str,
   ) -> Option<bool> {
@@ -103,7 +103,7 @@ impl ConstPlugin {
 
   fn evaluate_identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32,
@@ -131,7 +131,7 @@ impl ConstPlugin {
     }
   }
 
-  fn unused_statement(&self, parser: &mut JavascriptParser, stmt: Statement) -> Option<bool> {
+  fn unused_statement(&self, parser: &mut JavascriptParserState, stmt: Statement) -> Option<bool> {
     // Skip top level scope to align with webpack's ConstPlugin behavior.
     if parser.is_top_level_scope() {
       return None;
@@ -167,7 +167,7 @@ crate::impl_javascript_parser_hook!(
   ConstPlugin,
   JavascriptParserExpressionLogicalOperator,
   expression_logical_operator(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::BinExpr
   ) -> bool
 );
@@ -175,20 +175,20 @@ crate::impl_javascript_parser_hook!(
   ConstPlugin,
   JavascriptParserExpressionConditionalOperation,
   expression_conditional_operation(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expression: &swc_core::ecma::ast::CondExpr
   ) -> bool
 );
 crate::impl_javascript_parser_hook!(
   ConstPlugin,
   JavascriptParserStatementIf,
-  statement_if(parser: &mut JavascriptParser, expr: &swc_core::ecma::ast::IfStmt) -> bool
+  statement_if(parser: &mut JavascriptParserState, expr: &swc_core::ecma::ast::IfStmt) -> bool
 );
 crate::impl_javascript_parser_hook!(
   ConstPlugin,
   JavascriptParserIdentifier,
   identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &swc_core::ecma::ast::Ident,
     for_name: &str
   ) -> bool
@@ -197,7 +197,7 @@ crate::impl_javascript_parser_hook!(
   ConstPlugin,
   JavascriptParserEvaluateIdentifier,
   evaluate_identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32
@@ -206,7 +206,7 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   ConstPlugin,
   JavascriptParserUnusedStatement,
-  unused_statement(parser: &mut JavascriptParser, stmt: Statement) -> bool
+  unused_statement(parser: &mut JavascriptParserState, stmt: Statement) -> bool
 );
 
 impl JavascriptParserPlugin for ConstPlugin {

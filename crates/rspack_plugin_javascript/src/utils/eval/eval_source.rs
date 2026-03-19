@@ -14,11 +14,11 @@ use swc_core::{
 };
 
 use super::BasicEvaluatedExpression;
-use crate::visitors::JavascriptParser;
+use crate::visitors::JavascriptParserState;
 
 #[inline]
 pub fn eval_source(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   source: String,
   error_title: String,
 ) -> Option<BasicEvaluatedExpression<'static>> {

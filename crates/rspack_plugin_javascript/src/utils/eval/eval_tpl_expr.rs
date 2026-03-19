@@ -5,7 +5,7 @@ use swc_core::{
 };
 
 use super::BasicEvaluatedExpression;
-use crate::visitors::JavascriptParser;
+use crate::visitors::JavascriptParserState;
 
 #[derive(Debug, Clone, Copy)]
 pub enum TemplateStringKind {
@@ -16,7 +16,7 @@ pub enum TemplateStringKind {
 
 #[inline]
 fn get_simplified_template_result<'a>(
-  scanner: &mut JavascriptParser,
+  scanner: &mut JavascriptParserState,
   kind: TemplateStringKind,
   node: &'a Tpl,
 ) -> (
@@ -78,7 +78,7 @@ fn get_simplified_template_result<'a>(
 
 #[inline]
 pub fn eval_tpl_expression<'a>(
-  scanner: &mut JavascriptParser,
+  scanner: &mut JavascriptParserState,
   tpl: &'a Tpl,
 ) -> Option<BasicEvaluatedExpression<'a>> {
   let kind = TemplateStringKind::Cooked;
@@ -96,7 +96,7 @@ pub fn eval_tpl_expression<'a>(
 
 #[inline]
 pub fn eval_tagged_tpl_expression<'a>(
-  scanner: &mut JavascriptParser,
+  scanner: &mut JavascriptParserState,
   tagged_tpl: &'a TaggedTpl,
 ) -> Option<BasicEvaluatedExpression<'a>> {
   let tag = scanner.evaluate_expression(&tagged_tpl.tag);

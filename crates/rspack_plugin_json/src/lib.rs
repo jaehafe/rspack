@@ -14,8 +14,8 @@ use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_core::{
   BuildMetaDefaultObject, BuildMetaExportsType, ChunkGraph, ExportsInfoArtifact, ExportsInfoGetter,
   GenerateContext, Generator, Module, ModuleArgument, ModuleGraph, NAMESPACE_OBJECT_EXPORT,
-  ParseOption, Parser, Plugin, PrefetchExportsInfoMode, PrefetchedExportsInfoWrapper,
-  RuntimeSpec, SourceType, UsageState, UsedNameItem,
+  ParseOption, Parser, Plugin, PrefetchExportsInfoMode, PrefetchedExportsInfoWrapper, RuntimeSpec,
+  SourceType, UsageState, UsedNameItem,
   diagnostics::ModuleParseError,
   rspack_sources::{BoxSource, OriginalSource, RawStringSource, Source, SourceExt},
 };

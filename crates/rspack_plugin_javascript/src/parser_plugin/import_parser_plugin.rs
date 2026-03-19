@@ -27,7 +27,7 @@ use crate::{
   magic_comment::try_extract_magic_comment,
   utils::object_properties::{get_attributes, get_value_by_obj_prop},
   visitors::{
-    AllowedMemberTypes, ContextModuleScanResult, ExportedVariableInfo, JavascriptParser,
+    AllowedMemberTypes, ContextModuleScanResult, ExportedVariableInfo, JavascriptParserState,
     MemberExpressionInfo, Statement, TagInfoData, TopLevelScope, VariableDeclaration,
     VariableDeclarationKind, context_reg_exp, create_context_dependency, create_traceable_error,
     get_non_optional_part, parse_order_string,
@@ -37,7 +37,7 @@ use crate::{
 const DYNAMIC_IMPORT_TAG: &str = "dynamic import";
 
 fn tag_dynamic_import_referenced(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   import_call: &CallExpr,
   variable_name: Atom,
 ) {
@@ -131,7 +131,7 @@ pub struct ImportParserPlugin;
 impl ImportParserPlugin {
   fn can_collect_destructuring_assignment_properties(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &Expr,
   ) -> Option<bool> {
     if let Some(call) = expr.as_call()
@@ -154,7 +154,7 @@ impl ImportParserPlugin {
 
   fn pre_declarator(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     declarator: &VarDeclarator,
     declaration: VariableDeclaration<'_>,
   ) -> Option<bool> {
@@ -173,7 +173,7 @@ impl ImportParserPlugin {
 
   fn identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &Ident,
     for_name: &str,
   ) -> Option<bool> {
@@ -209,7 +209,7 @@ impl ImportParserPlugin {
 
   fn member_chain(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     _expr: &MemberExpr,
     for_name: &str,
     members: &[Atom],
@@ -233,7 +233,7 @@ impl ImportParserPlugin {
 
   fn call_member_chain(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &CallExpr,
     for_name: &str,
     members: &[Atom],
@@ -266,7 +266,7 @@ impl ImportParserPlugin {
 
   fn import_call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     node: &CallExpr,
     import_then: Option<&CallExpr>,
     referenced_in_members: Option<(&[Atom], bool)>,
@@ -517,7 +517,7 @@ impl ImportParserPlugin {
     Some(true)
   }
 
-  fn finish(&self, parser: &mut JavascriptParser) -> Option<bool> {
+  fn finish(&self, parser: &mut JavascriptParserState) -> Option<bool> {
     for (locator, variable_name, mut references) in parser
       .dynamic_import_references
       .take_all_import_references()
@@ -569,13 +569,13 @@ impl ImportParserPlugin {
 crate::impl_javascript_parser_hook!(
   ImportParserPlugin,
   JavascriptParserCanCollectDestructuringAssignmentProperties,
-  can_collect_destructuring_assignment_properties(parser: &mut JavascriptParser, expr: &Expr) -> bool
+  can_collect_destructuring_assignment_properties(parser: &mut JavascriptParserState, expr: &Expr) -> bool
 );
 crate::impl_javascript_parser_hook!(
   ImportParserPlugin,
   JavascriptParserPreDeclarator,
   pre_declarator(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     declarator: &VarDeclarator,
     declaration: VariableDeclaration<'_>
   ) -> bool
@@ -583,13 +583,13 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   ImportParserPlugin,
   JavascriptParserIdentifier,
-  identifier(parser: &mut JavascriptParser, ident: &Ident, for_name: &str) -> bool
+  identifier(parser: &mut JavascriptParserState, ident: &Ident, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   ImportParserPlugin,
   JavascriptParserMemberChain,
   member_chain(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &MemberExpr,
     for_name: &str,
     members: &[Atom],
@@ -601,7 +601,7 @@ crate::impl_javascript_parser_hook!(
   ImportParserPlugin,
   JavascriptParserCallMemberChain,
   call_member_chain(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &CallExpr,
     for_name: &str,
     members: &[Atom],
@@ -613,7 +613,7 @@ crate::impl_javascript_parser_hook!(
   ImportParserPlugin,
   JavascriptParserImportCall,
   import_call(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     node: &CallExpr,
     import_then: Option<&CallExpr>,
     referenced_in_members: Option<(&[Atom], bool)>
@@ -622,7 +622,7 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   ImportParserPlugin,
   JavascriptParserFinish,
-  finish(parser: &mut JavascriptParser) -> bool
+  finish(parser: &mut JavascriptParserState) -> bool
 );
 
 impl JavascriptParserPlugin for ImportParserPlugin {
@@ -680,7 +680,7 @@ fn get_fulfilled_callback_namespace_obj(import_then: &CallExpr) -> Option<&Pat> 
 }
 
 fn walk_import_then_fulfilled_callback(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   import_call: &CallExpr,
   fulfilled_callback: &Expr,
   namespace_obj_arg: &Pat,

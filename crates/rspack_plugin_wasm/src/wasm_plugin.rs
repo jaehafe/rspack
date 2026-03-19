@@ -2,8 +2,8 @@ use std::fmt::Debug;
 
 use rspack_core::{
   ChunkGraph, ChunkUkey, Compilation, CompilationParams, CompilationRenderManifest,
-  CompilerCompilation, DependencyType, Generator, ManifestAssetType, ModuleType, Parser,
-  PathData, Plugin, RenderManifestEntry, SourceType,
+  CompilerCompilation, DependencyType, Generator, ManifestAssetType, ModuleType, Parser, PathData,
+  Plugin, RenderManifestEntry, SourceType,
 };
 use rspack_error::{Diagnostic, Result};
 use rspack_hook::{plugin, plugin_hook};

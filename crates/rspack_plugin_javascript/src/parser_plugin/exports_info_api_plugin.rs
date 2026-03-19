@@ -12,7 +12,7 @@ use super::{
   JavascriptParserIdentifier, JavascriptParserMemberChain, JavascriptParserPlugin,
   JavascriptParserPluginContext,
 };
-use crate::{dependency::ExportInfoDependency, visitors::JavascriptParser};
+use crate::{dependency::ExportInfoDependency, visitors::JavascriptParserState};
 
 const EXPORTS_INFO: &str = "__webpack_exports_info__";
 
@@ -21,7 +21,7 @@ pub struct ExportsInfoApiPlugin;
 impl ExportsInfoApiPlugin {
   fn member_chain(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     member_expr: &MemberExpr,
     for_name: &str,
     members: &[Atom],
@@ -46,7 +46,7 @@ impl ExportsInfoApiPlugin {
 
   fn identifier(
     &self,
-    parser: &mut crate::visitors::JavascriptParser,
+    parser: &mut crate::visitors::JavascriptParserState,
     expr: &Ident,
     for_name: &str,
   ) -> Option<bool> {
@@ -64,7 +64,7 @@ crate::impl_javascript_parser_hook!(
   ExportsInfoApiPlugin,
   JavascriptParserMemberChain,
   member_chain(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     member_expr: &MemberExpr,
     for_name: &str,
     members: &[Atom],
@@ -76,7 +76,7 @@ crate::impl_javascript_parser_hook!(
   ExportsInfoApiPlugin,
   JavascriptParserIdentifier,
   identifier(
-    parser: &mut crate::visitors::JavascriptParser,
+    parser: &mut crate::visitors::JavascriptParserState,
     expr: &Ident,
     for_name: &str
   ) -> bool

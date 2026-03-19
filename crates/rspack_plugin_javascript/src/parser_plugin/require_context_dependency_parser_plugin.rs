@@ -10,13 +10,18 @@ use swc_core::{common::Spanned, ecma::ast::CallExpr};
 use super::{JavascriptParserCall, JavascriptParserPlugin, JavascriptParserPluginContext};
 use crate::{
   dependency::RequireContextDependency,
-  visitors::{JavascriptParser, clean_regexp_in_context_module, default_context_reg_exp},
+  visitors::{JavascriptParserState, clean_regexp_in_context_module, default_context_reg_exp},
 };
 
 pub struct RequireContextDependencyParserPlugin;
 
 impl RequireContextDependencyParserPlugin {
-  fn call(&self, parser: &mut JavascriptParser, expr: &CallExpr, for_name: &str) -> Option<bool> {
+  fn call(
+    &self,
+    parser: &mut JavascriptParserState,
+    expr: &CallExpr,
+    for_name: &str,
+  ) -> Option<bool> {
     if for_name != "require.context" {
       return None;
     }
@@ -100,7 +105,7 @@ impl RequireContextDependencyParserPlugin {
 crate::impl_javascript_parser_hook!(
   RequireContextDependencyParserPlugin,
   JavascriptParserCall,
-  call(parser: &mut JavascriptParser, expr: &CallExpr, for_name: &str) -> bool
+  call(parser: &mut JavascriptParserState, expr: &CallExpr, for_name: &str) -> bool
 );
 
 impl JavascriptParserPlugin for RequireContextDependencyParserPlugin {

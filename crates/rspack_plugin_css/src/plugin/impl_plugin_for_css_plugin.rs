@@ -10,8 +10,8 @@ use atomic_refcell::AtomicRefCell;
 use rspack_core::{
   AssetInfo, Chunk, ChunkGraph, ChunkKind, ChunkLoading, ChunkLoadingType, ChunkUkey, Compilation,
   CompilationContentHash, CompilationId, CompilationParams, CompilationRenderManifest,
-  CompilationRuntimeRequirementInTree, CompilerCompilation, DependencyType, ManifestAssetType,
-  Generator, Module, ModuleGraph, ModuleType, Parser, PathData, Plugin, PublicPath,
+  CompilationRuntimeRequirementInTree, CompilerCompilation, DependencyType, Generator,
+  ManifestAssetType, Module, ModuleGraph, ModuleType, Parser, PathData, Plugin, PublicPath,
   RenderManifestEntry, RuntimeGlobals, RuntimeModule, RuntimeModuleExt, SelfModuleFactory,
   SourceType, get_css_chunk_filename_template,
   rspack_sources::{

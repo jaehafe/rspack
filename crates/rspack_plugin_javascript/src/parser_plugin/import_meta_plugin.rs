@@ -21,7 +21,7 @@ use crate::{
   dependency::{ImportMetaResolveDependency, ImportMetaResolveHeaderDependency},
   utils::eval,
   visitors::{
-    AllowedMemberTypes, ExportedVariableInfo, ExprRef, JavascriptParser, MemberExpressionInfo,
+    AllowedMemberTypes, ExportedVariableInfo, ExprRef, JavascriptParserState, MemberExpressionInfo,
     RootName, create_traceable_error, expr_name,
   },
 };
@@ -29,7 +29,7 @@ use crate::{
 pub struct ImportMetaPlugin(pub(crate) ImportMeta);
 
 impl ImportMetaPlugin {
-  fn import_meta_url(&self, parser: &JavascriptParser) -> String {
+  fn import_meta_url(&self, parser: &JavascriptParserState) -> String {
     Url::from_file_path(parser.resource_data.resource())
       .expect("should be a path")
       .to_string()
@@ -53,7 +53,7 @@ impl ImportMetaPlugin {
 
   fn process_import_meta_resolve(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &swc_core::ecma::ast::CallExpr,
   ) {
     if call_expr.args.len() != 1 {
@@ -81,7 +81,7 @@ impl ImportMetaPlugin {
 
   fn process_import_meta_resolve_item(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     param: &eval::BasicEvaluatedExpression,
   ) {
     if param.is_string() {
@@ -98,7 +98,7 @@ impl ImportMetaPlugin {
 impl ImportMetaPlugin {
   fn evaluate_typeof<'a>(
     &self,
-    _parser: &mut JavascriptParser,
+    _parser: &mut JavascriptParserState,
     expr: &'a swc_core::ecma::ast::UnaryExpr,
     for_name: &str,
   ) -> Option<eval::BasicEvaluatedExpression<'a>> {
@@ -129,7 +129,7 @@ impl ImportMetaPlugin {
 
   fn evaluate_identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32,
@@ -149,7 +149,7 @@ impl ImportMetaPlugin {
 
   fn evaluate<'a>(
     &self,
-    _parser: &mut JavascriptParser,
+    _parser: &mut JavascriptParserState,
     expr: &'a Expr,
   ) -> Option<eval::BasicEvaluatedExpression<'a>> {
     if let Some(member) = expr.as_member()
@@ -187,7 +187,7 @@ impl ImportMetaPlugin {
 
   fn r#typeof(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     unary_expr: &swc_core::ecma::ast::UnaryExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -226,7 +226,7 @@ impl ImportMetaPlugin {
 
   fn can_collect_destructuring_assignment_properties(
     &self,
-    _parser: &mut JavascriptParser,
+    _parser: &mut JavascriptParserState,
     expr: &Expr,
   ) -> Option<bool> {
     if expr.is_meta_prop() {
@@ -237,7 +237,7 @@ impl ImportMetaPlugin {
 
   fn meta_property(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     root_name: &swc_core::atoms::Atom,
     span: Span,
   ) -> Option<bool> {
@@ -306,7 +306,7 @@ impl ImportMetaPlugin {
 
   fn member(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     member_expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -331,7 +331,7 @@ impl ImportMetaPlugin {
 
   fn call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -344,7 +344,7 @@ impl ImportMetaPlugin {
 
   fn unhandled_expression_member_chain(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     root_info: &ExportedVariableInfo,
     expr: &swc_core::ecma::ast::MemberExpr,
   ) -> Option<bool> {
@@ -399,7 +399,7 @@ pub struct ImportMetaDisabledPlugin;
 impl ImportMetaDisabledPlugin {
   fn meta_property(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     root_name: &swc_core::atoms::Atom,
     span: Span,
   ) -> Option<bool> {
@@ -423,7 +423,7 @@ crate::impl_javascript_parser_hook!(
   JavascriptParserEvaluateTypeofAny,
   <'a>,
   evaluate_typeof(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a swc_core::ecma::ast::UnaryExpr,
     for_name: &str
   ) -> eval::BasicEvaluatedExpression<'a>
@@ -432,7 +432,7 @@ crate::impl_javascript_parser_hook!(
   ImportMetaPlugin,
   JavascriptParserEvaluateIdentifier,
   evaluate_identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32
@@ -442,13 +442,13 @@ crate::impl_javascript_parser_hook!(
   ImportMetaPlugin,
   JavascriptParserEvaluate,
   <'a>,
-  evaluate(parser: &mut JavascriptParser, expr: &'a Expr) -> eval::BasicEvaluatedExpression<'a>
+  evaluate(parser: &mut JavascriptParserState, expr: &'a Expr) -> eval::BasicEvaluatedExpression<'a>
 );
 crate::impl_javascript_parser_hook!(
   ImportMetaPlugin,
   JavascriptParserTypeof,
   r#typeof(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     unary_expr: &swc_core::ecma::ast::UnaryExpr,
     for_name: &str
   ) -> bool
@@ -456,13 +456,13 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   ImportMetaPlugin,
   JavascriptParserCanCollectDestructuringAssignmentProperties,
-  can_collect_destructuring_assignment_properties(parser: &mut JavascriptParser, expr: &Expr) -> bool
+  can_collect_destructuring_assignment_properties(parser: &mut JavascriptParserState, expr: &Expr) -> bool
 );
 crate::impl_javascript_parser_hook!(
   ImportMetaPlugin,
   JavascriptParserMetaProperty,
   meta_property(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     root_name: &swc_core::atoms::Atom,
     span: Span
   ) -> bool
@@ -471,7 +471,7 @@ crate::impl_javascript_parser_hook!(
   ImportMetaPlugin,
   JavascriptParserMember,
   member(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     member_expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str
   ) -> bool
@@ -480,7 +480,7 @@ crate::impl_javascript_parser_hook!(
   ImportMetaPlugin,
   JavascriptParserCall,
   call(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str
   ) -> bool
@@ -489,7 +489,7 @@ crate::impl_javascript_parser_hook!(
   ImportMetaPlugin,
   JavascriptParserUnhandledExpressionMemberChain,
   unhandled_expression_member_chain(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     root_info: &ExportedVariableInfo,
     expr: &swc_core::ecma::ast::MemberExpr
   ) -> bool
@@ -498,7 +498,7 @@ crate::impl_javascript_parser_hook!(
   ImportMetaDisabledPlugin,
   JavascriptParserMetaProperty,
   meta_property(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     root_name: &swc_core::atoms::Atom,
     span: Span
   ) -> bool

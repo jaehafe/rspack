@@ -19,13 +19,13 @@ use crate::{
     object_properties::{get_bool_by_obj_prop, get_literal_str_by_obj_prop, get_regex_by_obj_prop},
   },
   visitors::{
-    JavascriptParser, clean_regexp_in_context_module, default_context_reg_exp, expr_name,
+    JavascriptParserState, clean_regexp_in_context_module, default_context_reg_exp, expr_name,
   },
 };
 
 fn create_import_meta_context_dependency(
   node: &CallExpr,
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
 ) -> Option<ImportMetaContextDependency> {
   assert!(node.callee.is_expr());
   let dyn_imported = node.args.first()?;
@@ -116,7 +116,7 @@ pub struct ImportMetaContextDependencyParserPlugin;
 impl ImportMetaContextDependencyParserPlugin {
   fn evaluate_identifier(
     &self,
-    _parser: &mut JavascriptParser,
+    _parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32,
@@ -136,7 +136,7 @@ impl ImportMetaContextDependencyParserPlugin {
 
   fn call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -155,7 +155,7 @@ crate::impl_javascript_parser_hook!(
   ImportMetaContextDependencyParserPlugin,
   JavascriptParserEvaluateIdentifier,
   evaluate_identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32
@@ -165,7 +165,7 @@ crate::impl_javascript_parser_hook!(
   ImportMetaContextDependencyParserPlugin,
   JavascriptParserCall,
   call(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str
   ) -> bool

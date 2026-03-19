@@ -7,8 +7,8 @@ use rspack_collections::IdentifierSet;
 use rspack_core::{
   AssetInfo, Chunk, ChunkGraph, ChunkKind, ChunkUkey, Compilation,
   CompilationAdditionalTreeRuntimeRequirements, CompilationAsset, CompilationParams,
-  CompilationProcessAssets, CompilationRecords, CompilerCompilation, DependencyType, LoaderContext,
-  Generator, ModuleId, ModuleIdentifier, ModuleType, NormalModuleFactoryGenerator,
+  CompilationProcessAssets, CompilationRecords, CompilerCompilation, DependencyType, Generator,
+  LoaderContext, ModuleId, ModuleIdentifier, ModuleType, NormalModuleFactoryGenerator,
   NormalModuleFactoryParser, NormalModuleLoader, Parser, ParserOptions, PathData, Plugin,
   RunnerContext, RuntimeGlobals, RuntimeModule, RuntimeModuleExt, RuntimeSpec,
   chunk_graph_chunk::{ChunkId, ChunkIdSet},

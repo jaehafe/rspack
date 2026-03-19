@@ -3,14 +3,14 @@ use std::sync::Arc;
 use rspack_core::ConstDependency;
 
 use super::{JavascriptParserPlugin, JavascriptParserPluginContext, JavascriptParserThis};
-use crate::visitors::JavascriptParser;
+use crate::visitors::JavascriptParserState;
 
 pub struct ESMTopLevelThisParserPlugin;
 
 impl ESMTopLevelThisParserPlugin {
   fn this(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::ThisExpr,
     _for_name: &str,
   ) -> Option<bool> {
@@ -28,7 +28,7 @@ crate::impl_javascript_parser_hook!(
   ESMTopLevelThisParserPlugin,
   JavascriptParserThis,
   this(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::ThisExpr,
     for_name: &str
   ) -> bool

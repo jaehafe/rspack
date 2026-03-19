@@ -17,7 +17,7 @@ use super::{
   },
   ProvideValue, VALUE_DEP_PREFIX,
 };
-use crate::{dependency::ProvideDependency, visitors::JavascriptParser};
+use crate::{dependency::ProvideDependency, visitors::JavascriptParserState};
 
 const SOURCE_DOT: &str = r#"."#;
 const MODULE_DOT: &str = r#"_dot_"#;
@@ -32,7 +32,7 @@ impl ProvideParserPlugin {
     Self { provide, names }
   }
 
-  fn add_provide_dep(&self, name: &str, span: Span, parser: &mut JavascriptParser) -> bool {
+  fn add_provide_dep(&self, name: &str, span: Span, parser: &mut JavascriptParserState) -> bool {
     if let Some(requests) = self.provide.get(name) {
       let name_identifier = if name.contains(SOURCE_DOT) {
         format!(
@@ -69,13 +69,13 @@ impl ProvideParserPlugin {
 }
 
 impl ProvideParserPlugin {
-  fn can_rename(&self, _parser: &mut JavascriptParser, str: &str) -> Option<bool> {
+  fn can_rename(&self, _parser: &mut JavascriptParserState, str: &str) -> Option<bool> {
     self.names.contains(str).then_some(true)
   }
 
   fn call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -89,7 +89,7 @@ impl ProvideParserPlugin {
 
   fn member(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -100,7 +100,7 @@ impl ProvideParserPlugin {
 
   fn identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &swc_core::ecma::ast::Ident,
     for_name: &str,
   ) -> Option<bool> {
@@ -111,7 +111,7 @@ impl ProvideParserPlugin {
 
   fn rename(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::Expr,
     for_name: &str,
   ) -> Option<bool> {
@@ -124,13 +124,13 @@ impl ProvideParserPlugin {
 crate::impl_javascript_parser_hook!(
   ProvideParserPlugin,
   JavascriptParserCanRename,
-  can_rename(parser: &mut JavascriptParser, str: &str) -> bool
+  can_rename(parser: &mut JavascriptParserState, str: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   ProvideParserPlugin,
   JavascriptParserCall,
   call(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str
   ) -> bool
@@ -139,7 +139,7 @@ crate::impl_javascript_parser_hook!(
   ProvideParserPlugin,
   JavascriptParserMember,
   member(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str
   ) -> bool
@@ -148,7 +148,7 @@ crate::impl_javascript_parser_hook!(
   ProvideParserPlugin,
   JavascriptParserIdentifier,
   identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &swc_core::ecma::ast::Ident,
     for_name: &str
   ) -> bool
@@ -157,7 +157,7 @@ crate::impl_javascript_parser_hook!(
   ProvideParserPlugin,
   JavascriptParserRename,
   rename(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::Expr,
     for_name: &str
   ) -> bool

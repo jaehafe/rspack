@@ -7,14 +7,14 @@ use super::{
   JavascriptParserCall, JavascriptParserFinish, JavascriptParserPlugin,
   JavascriptParserPluginContext, TopLevelSymbol,
 };
-use crate::visitors::JavascriptParser;
+use crate::visitors::JavascriptParserState;
 
 pub struct JavascriptMetaInfoPlugin;
 
 impl JavascriptMetaInfoPlugin {
   fn call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     _expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -33,7 +33,7 @@ impl JavascriptMetaInfoPlugin {
     None
   }
 
-  fn finish(&self, parser: &mut JavascriptParser) -> Option<bool> {
+  fn finish(&self, parser: &mut JavascriptParserState) -> Option<bool> {
     if parser.build_info.top_level_declarations.is_none() {
       parser.build_info.top_level_declarations = Some(FxHashSet::default());
     }
@@ -59,7 +59,7 @@ crate::impl_javascript_parser_hook!(
   JavascriptMetaInfoPlugin,
   JavascriptParserCall,
   call(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str
   ) -> bool
@@ -67,7 +67,7 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   JavascriptMetaInfoPlugin,
   JavascriptParserFinish,
-  finish(parser: &mut JavascriptParser) -> bool
+  finish(parser: &mut JavascriptParserState) -> bool
 );
 
 impl JavascriptParserPlugin for JavascriptMetaInfoPlugin {

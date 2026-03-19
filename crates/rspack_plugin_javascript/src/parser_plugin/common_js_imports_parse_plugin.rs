@@ -34,8 +34,9 @@ use crate::{
   magic_comment::try_extract_magic_comment,
   utils::eval::{self, BasicEvaluatedExpression},
   visitors::{
-    JavascriptParser, TagInfoData, VariableDeclaration, VariableDeclarationKind, context_reg_exp,
-    create_context_dependency, create_traceable_error, expr_name, get_non_optional_part,
+    JavascriptParserState, TagInfoData, VariableDeclaration, VariableDeclarationKind,
+    context_reg_exp, create_context_dependency, create_traceable_error, expr_name,
+    get_non_optional_part,
   },
 };
 
@@ -108,7 +109,7 @@ struct RequireTagData {
 }
 
 fn tag_commonjs_require_referenced(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   require_call: &CallExpr,
   variable_name: Atom,
 ) {
@@ -128,7 +129,7 @@ fn tag_commonjs_require_referenced(
 }
 
 fn create_commonjs_require_context_dependency(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   param: &BasicEvaluatedExpression,
   call_expr: &CallExpr,
   arg_expr: &Expr,
@@ -171,7 +172,7 @@ fn create_commonjs_require_context_dependency(
 }
 
 fn create_require_resolve_context_dependency(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   param: &BasicEvaluatedExpression,
   range: DependencyRange,
   weak: bool,
@@ -253,7 +254,7 @@ impl CallOrNewExpr<'_> {
 pub struct CommonJsImportsParserPlugin;
 
 impl CommonJsImportsParserPlugin {
-  fn has_ignore_comment(parser: &mut JavascriptParser, error_span: Span, span: Span) -> bool {
+  fn has_ignore_comment(parser: &mut JavascriptParserState, error_span: Span, span: Span) -> bool {
     if !parser
       .javascript_options
       .commonjs_magic_comments
@@ -267,7 +268,7 @@ impl CommonJsImportsParserPlugin {
       .unwrap_or_default()
   }
 
-  fn should_process_resolve(parser: &mut JavascriptParser, call_expr: &CallExpr) -> bool {
+  fn should_process_resolve(parser: &mut JavascriptParserState, call_expr: &CallExpr) -> bool {
     let Callee::Expr(expr) = &call_expr.callee else {
       return false;
     };
@@ -287,7 +288,7 @@ impl CommonJsImportsParserPlugin {
     true
   }
 
-  fn process_resolve(&self, parser: &mut JavascriptParser, call_expr: &CallExpr, weak: bool) {
+  fn process_resolve(&self, parser: &mut JavascriptParserState, call_expr: &CallExpr, weak: bool) {
     if call_expr.args.len() != 1 {
       return;
     }
@@ -325,7 +326,7 @@ impl CommonJsImportsParserPlugin {
 
   fn process_resolve_item(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     param: &BasicEvaluatedExpression,
     weak: bool,
   ) -> bool {
@@ -345,7 +346,7 @@ impl CommonJsImportsParserPlugin {
 
   fn process_resolve_context(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     param: &BasicEvaluatedExpression,
     weak: bool,
   ) {
@@ -356,7 +357,7 @@ impl CommonJsImportsParserPlugin {
 
   fn chain_handler(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     member_expr: &MemberExpr,
     call_expr: &CallExpr,
     members: &[Atom],
@@ -397,7 +398,7 @@ impl CommonJsImportsParserPlugin {
 
   fn process_require_item(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     span: Span,
     param: &BasicEvaluatedExpression,
   ) -> Option<bool> {
@@ -440,7 +441,7 @@ impl CommonJsImportsParserPlugin {
 
   fn process_require_context(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     param: &BasicEvaluatedExpression,
   ) -> Option<bool> {
@@ -480,7 +481,11 @@ impl CommonJsImportsParserPlugin {
     Some(true)
   }
 
-  fn require_handler(&self, parser: &mut JavascriptParser, expr: CallOrNewExpr) -> Option<bool> {
+  fn require_handler(
+    &self,
+    parser: &mut JavascriptParserState,
+    expr: CallOrNewExpr,
+  ) -> Option<bool> {
     let callee = expr.callee()?;
     let args = expr.args()?;
 
@@ -554,7 +559,7 @@ impl CommonJsImportsParserPlugin {
 
   fn require_as_expression_handler(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &Ident,
   ) -> Option<bool> {
     if parser.javascript_options.require_as_expression == Some(false) {
@@ -616,7 +621,7 @@ impl CommonJsImportsParserPlugin {
 impl CommonJsImportsParserPlugin {
   fn can_collect_destructuring_assignment_properties(
     &self,
-    _parser: &mut JavascriptParser,
+    _parser: &mut JavascriptParserState,
     expr: &Expr,
   ) -> Option<bool> {
     let call = expr.as_call()?;
@@ -628,7 +633,7 @@ impl CommonJsImportsParserPlugin {
 
   fn pre_declarator(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     declarator: &VarDeclarator,
     declaration: VariableDeclaration<'_>,
   ) -> Option<bool> {
@@ -646,7 +651,7 @@ impl CommonJsImportsParserPlugin {
 
   fn identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &Ident,
     for_name: &str,
   ) -> Option<bool> {
@@ -687,7 +692,7 @@ impl CommonJsImportsParserPlugin {
 
   fn member_chain(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     _expr: &MemberExpr,
     for_name: &str,
     members: &[Atom],
@@ -711,7 +716,7 @@ impl CommonJsImportsParserPlugin {
 
   fn call_member_chain(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &CallExpr,
     for_name: &str,
     members: &[Atom],
@@ -742,7 +747,7 @@ impl CommonJsImportsParserPlugin {
     Some(true)
   }
 
-  fn can_rename(&self, _parser: &mut JavascriptParser, for_name: &str) -> Option<bool> {
+  fn can_rename(&self, _parser: &mut JavascriptParserState, for_name: &str) -> Option<bool> {
     if for_name == expr_name::REQUIRE {
       Some(true)
     } else {
@@ -750,7 +755,12 @@ impl CommonJsImportsParserPlugin {
     }
   }
 
-  fn rename(&self, parser: &mut JavascriptParser, expr: &Expr, for_name: &str) -> Option<bool> {
+  fn rename(
+    &self,
+    parser: &mut JavascriptParserState,
+    expr: &Expr,
+    for_name: &str,
+  ) -> Option<bool> {
     if for_name == expr_name::REQUIRE {
       if parser.javascript_options.require_alias.unwrap_or_default() {
         parser.add_presentational_dependency(Box::new(ConstDependency::new(
@@ -772,7 +782,7 @@ impl CommonJsImportsParserPlugin {
 
   fn evaluate_typeof<'a>(
     &self,
-    _parser: &mut JavascriptParser,
+    _parser: &mut JavascriptParserState,
     expr: &'a UnaryExpr,
     for_name: &str,
   ) -> Option<BasicEvaluatedExpression<'a>> {
@@ -790,7 +800,7 @@ impl CommonJsImportsParserPlugin {
 
   fn evaluate_identifier(
     &self,
-    _parser: &mut JavascriptParser,
+    _parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32,
@@ -823,7 +833,7 @@ impl CommonJsImportsParserPlugin {
 
   fn r#typeof(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::UnaryExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -844,7 +854,7 @@ impl CommonJsImportsParserPlugin {
 
   fn call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -873,7 +883,7 @@ impl CommonJsImportsParserPlugin {
 
   fn new_expression(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     new_expr: &NewExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -887,7 +897,7 @@ impl CommonJsImportsParserPlugin {
   #[allow(clippy::too_many_arguments)]
   fn member_chain_of_call_member_chain(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     member_expr: &MemberExpr,
     callee_members: &[Atom],
     call_expr: &CallExpr,
@@ -908,7 +918,7 @@ impl CommonJsImportsParserPlugin {
   #[allow(clippy::too_many_arguments)]
   fn call_member_chain_of_call_member_chain(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     callee_members: &[Atom],
     inner_call_expr: &CallExpr,
@@ -931,7 +941,7 @@ impl CommonJsImportsParserPlugin {
 
   fn assign(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     _expr: &AssignExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -946,7 +956,7 @@ impl CommonJsImportsParserPlugin {
     None
   }
 
-  fn finish(&self, parser: &mut JavascriptParser) -> Option<bool> {
+  fn finish(&self, parser: &mut JavascriptParserState) -> Option<bool> {
     for (locator, variable_name, mut references) in parser
       .common_js_require_references
       .take_all_require_references()
@@ -990,13 +1000,13 @@ impl CommonJsImportsParserPlugin {
 crate::impl_javascript_parser_hook!(
   CommonJsImportsParserPlugin,
   JavascriptParserCanCollectDestructuringAssignmentProperties,
-  can_collect_destructuring_assignment_properties(parser: &mut JavascriptParser, expr: &Expr) -> bool
+  can_collect_destructuring_assignment_properties(parser: &mut JavascriptParserState, expr: &Expr) -> bool
 );
 crate::impl_javascript_parser_hook!(
   CommonJsImportsParserPlugin,
   JavascriptParserPreDeclarator,
   pre_declarator(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     declarator: &VarDeclarator,
     declaration: VariableDeclaration<'_>
   ) -> bool
@@ -1004,13 +1014,13 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   CommonJsImportsParserPlugin,
   JavascriptParserIdentifier,
-  identifier(parser: &mut JavascriptParser, ident: &Ident, for_name: &str) -> bool
+  identifier(parser: &mut JavascriptParserState, ident: &Ident, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   CommonJsImportsParserPlugin,
   JavascriptParserMemberChain,
   member_chain(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &MemberExpr,
     for_name: &str,
     members: &[Atom],
@@ -1022,7 +1032,7 @@ crate::impl_javascript_parser_hook!(
   CommonJsImportsParserPlugin,
   JavascriptParserCallMemberChain,
   call_member_chain(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &CallExpr,
     for_name: &str,
     members: &[Atom],
@@ -1033,19 +1043,19 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   CommonJsImportsParserPlugin,
   JavascriptParserCanRename,
-  can_rename(parser: &mut JavascriptParser, for_name: &str) -> bool
+  can_rename(parser: &mut JavascriptParserState, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   CommonJsImportsParserPlugin,
   JavascriptParserRename,
-  rename(parser: &mut JavascriptParser, expr: &Expr, for_name: &str) -> bool
+  rename(parser: &mut JavascriptParserState, expr: &Expr, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   CommonJsImportsParserPlugin,
   JavascriptParserEvaluateTypeof,
   <'a>,
   evaluate_typeof(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a UnaryExpr,
     for_name: &str
   ) -> BasicEvaluatedExpression<'a>
@@ -1054,7 +1064,7 @@ crate::impl_javascript_parser_hook!(
   CommonJsImportsParserPlugin,
   JavascriptParserEvaluateIdentifier,
   evaluate_identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32
@@ -1064,7 +1074,7 @@ crate::impl_javascript_parser_hook!(
   CommonJsImportsParserPlugin,
   JavascriptParserTypeof,
   r#typeof(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::UnaryExpr,
     for_name: &str
   ) -> bool
@@ -1072,13 +1082,13 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   CommonJsImportsParserPlugin,
   JavascriptParserCall,
-  call(parser: &mut JavascriptParser, call_expr: &CallExpr, for_name: &str) -> bool
+  call(parser: &mut JavascriptParserState, call_expr: &CallExpr, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   CommonJsImportsParserPlugin,
   JavascriptParserNewExpression,
   new_expression(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     new_expr: &NewExpr,
     for_name: &str
   ) -> bool
@@ -1087,7 +1097,7 @@ crate::impl_javascript_parser_hook!(
   CommonJsImportsParserPlugin,
   JavascriptParserMemberChainOfCallMemberChain,
   member_chain_of_call_member_chain(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     member_expr: &MemberExpr,
     callee_members: &[Atom],
     call_expr: &CallExpr,
@@ -1100,7 +1110,7 @@ crate::impl_javascript_parser_hook!(
   CommonJsImportsParserPlugin,
   JavascriptParserCallMemberChainOfCallMemberChain,
   call_member_chain_of_call_member_chain(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     callee_members: &[Atom],
     inner_call_expr: &CallExpr,
@@ -1112,12 +1122,12 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   CommonJsImportsParserPlugin,
   JavascriptParserAssign,
-  assign(parser: &mut JavascriptParser, expr: &AssignExpr, for_name: &str) -> bool
+  assign(parser: &mut JavascriptParserState, expr: &AssignExpr, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   CommonJsImportsParserPlugin,
   JavascriptParserFinish,
-  finish(parser: &mut JavascriptParser) -> bool
+  finish(parser: &mut JavascriptParserState) -> bool
 );
 
 impl JavascriptParserPlugin for CommonJsImportsParserPlugin {

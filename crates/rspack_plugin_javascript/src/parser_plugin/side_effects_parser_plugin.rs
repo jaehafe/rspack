@@ -3,7 +3,7 @@ use std::sync::{Arc, LazyLock};
 use rspack_core::{DependencyRange, SideEffectsBailoutItemWithSpan};
 use swc_core::{
   common::{
-    Mark, Spanned, SyntaxContext,
+    Spanned, SyntaxContext,
     comments::{CommentKind, Comments},
   },
   ecma::{
@@ -17,29 +17,28 @@ use swc_core::{
 use crate::{
   ClassExt, JavascriptParserModuleDeclaration, JavascriptParserPlugin,
   JavascriptParserPluginContext, JavascriptParserStatement,
-  visitors::{JavascriptParser, Statement, VariableDeclaration},
+  visitors::{JavascriptParserState, Statement, VariableDeclaration},
 };
 
 static PURE_COMMENTS: LazyLock<regex::Regex> =
   LazyLock::new(|| regex::Regex::new("^\\s*(#|@)__PURE__\\s*$").expect("Should create the regex"));
 
-pub struct SideEffectsParserPlugin {
-  unresolve_ctxt: SyntaxContext,
-}
+pub struct SideEffectsParserPlugin;
 
 impl SideEffectsParserPlugin {
-  pub fn new(unresolved_mark: Mark) -> Self {
-    Self {
-      unresolve_ctxt: SyntaxContext::empty().apply_mark(unresolved_mark),
-    }
-  }
-}
-
-impl SideEffectsParserPlugin {
-  fn module_declaration(&self, parser: &mut JavascriptParser, decl: &ModuleDecl) -> Option<bool> {
+  fn module_declaration(
+    &self,
+    parser: &mut JavascriptParserState,
+    decl: &ModuleDecl,
+  ) -> Option<bool> {
     match decl {
       ModuleDecl::ExportDefaultExpr(expr) => {
-        if !is_pure_expression(parser, &expr.expr, self.unresolve_ctxt, parser.comments) {
+        if !is_pure_expression(
+          parser,
+          &expr.expr,
+          parser.unresolved_context,
+          parser.comments,
+        ) {
           let range = DependencyRange::from(expr.span);
           let loc = parser.to_dependency_location(range);
           parser.side_effects_item = Some(SideEffectsBailoutItemWithSpan::new(
@@ -50,7 +49,12 @@ impl SideEffectsParserPlugin {
         }
       }
       ModuleDecl::ExportDecl(decl) => {
-        if !is_pure_decl(parser, &decl.decl, self.unresolve_ctxt, parser.comments) {
+        if !is_pure_decl(
+          parser,
+          &decl.decl,
+          parser.unresolved_context,
+          parser.comments,
+        ) {
           let range = DependencyRange::from(decl.decl.span());
           let loc = parser.to_dependency_location(range);
           parser.side_effects_item = Some(SideEffectsBailoutItemWithSpan::new(
@@ -64,7 +68,7 @@ impl SideEffectsParserPlugin {
     };
     None
   }
-  fn statement(&self, parser: &mut JavascriptParser, stmt: Statement) -> Option<bool> {
+  fn statement(&self, parser: &mut JavascriptParserState, stmt: Statement) -> Option<bool> {
     if !parser.is_top_level_scope() {
       return None;
     }
@@ -76,12 +80,12 @@ impl SideEffectsParserPlugin {
 crate::impl_javascript_parser_hook!(
   SideEffectsParserPlugin,
   JavascriptParserModuleDeclaration,
-  module_declaration(parser: &mut JavascriptParser, decl: &ModuleDecl) -> bool
+  module_declaration(parser: &mut JavascriptParserState, decl: &ModuleDecl) -> bool
 );
 crate::impl_javascript_parser_hook!(
   SideEffectsParserPlugin,
   JavascriptParserStatement,
-  statement(parser: &mut JavascriptParser, stmt: Statement) -> bool
+  statement(parser: &mut JavascriptParserState, stmt: Statement) -> bool
 );
 
 impl JavascriptParserPlugin for SideEffectsParserPlugin {
@@ -92,7 +96,7 @@ impl JavascriptParserPlugin for SideEffectsParserPlugin {
 }
 
 fn is_pure_call_expr(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   expr: &Expr,
   unresolved_ctxt: SyntaxContext,
   comments: Option<&dyn Comments>,
@@ -130,13 +134,18 @@ fn is_pure_call_expr(
 }
 
 impl SideEffectsParserPlugin {
-  fn analyze_stmt_side_effects(&self, stmt: &Statement, parser: &mut JavascriptParser) {
+  fn analyze_stmt_side_effects(&self, stmt: &Statement, parser: &mut JavascriptParserState) {
     if parser.side_effects_item.is_some() {
       return;
     }
     match stmt {
       Statement::If(if_stmt) => {
-        if !is_pure_expression(parser, &if_stmt.test, self.unresolve_ctxt, parser.comments) {
+        if !is_pure_expression(
+          parser,
+          &if_stmt.test,
+          parser.unresolved_context,
+          parser.comments,
+        ) {
           let range = DependencyRange::from(if_stmt.span());
           let loc = parser.to_dependency_location(range);
           parser.side_effects_item = Some(SideEffectsBailoutItemWithSpan::new(
@@ -150,7 +159,7 @@ impl SideEffectsParserPlugin {
         if !is_pure_expression(
           parser,
           &while_stmt.test,
-          self.unresolve_ctxt,
+          parser.unresolved_context,
           parser.comments,
         ) {
           let range = DependencyRange::from(while_stmt.span());
@@ -166,7 +175,7 @@ impl SideEffectsParserPlugin {
         if !is_pure_expression(
           parser,
           &do_while_stmt.test,
-          self.unresolve_ctxt,
+          parser.unresolved_context,
           parser.comments,
         ) {
           let range = DependencyRange::from(do_while_stmt.span());
@@ -182,10 +191,10 @@ impl SideEffectsParserPlugin {
         let pure_init = match for_stmt.init {
           Some(ref init) => match init {
             VarDeclOrExpr::VarDecl(decl) => {
-              is_pure_var_decl(parser, decl, self.unresolve_ctxt, parser.comments)
+              is_pure_var_decl(parser, decl, parser.unresolved_context, parser.comments)
             }
             VarDeclOrExpr::Expr(expr) => {
-              is_pure_expression(parser, expr, self.unresolve_ctxt, parser.comments)
+              is_pure_expression(parser, expr, parser.unresolved_context, parser.comments)
             }
           },
           None => true,
@@ -203,7 +212,9 @@ impl SideEffectsParserPlugin {
         }
 
         let pure_test = match &for_stmt.test {
-          Some(test) => is_pure_expression(parser, test, self.unresolve_ctxt, parser.comments),
+          Some(test) => {
+            is_pure_expression(parser, test, parser.unresolved_context, parser.comments)
+          }
           None => true,
         };
 
@@ -219,7 +230,9 @@ impl SideEffectsParserPlugin {
         }
 
         let pure_update = match for_stmt.update {
-          Some(ref expr) => is_pure_expression(parser, expr, self.unresolve_ctxt, parser.comments),
+          Some(ref expr) => {
+            is_pure_expression(parser, expr, parser.unresolved_context, parser.comments)
+          }
           None => true,
         };
 
@@ -237,7 +250,7 @@ impl SideEffectsParserPlugin {
         if !is_pure_expression(
           parser,
           &expr_stmt.expr,
-          self.unresolve_ctxt,
+          parser.unresolved_context,
           parser.comments,
         ) {
           let range = DependencyRange::from(expr_stmt.span());
@@ -253,7 +266,7 @@ impl SideEffectsParserPlugin {
         if !is_pure_expression(
           parser,
           &switch_stmt.discriminant,
-          self.unresolve_ctxt,
+          parser.unresolved_context,
           parser.comments,
         ) {
           let range = DependencyRange::from(switch_stmt.span());
@@ -269,7 +282,7 @@ impl SideEffectsParserPlugin {
         if !is_pure_class(
           parser,
           class_stmt.class(),
-          self.unresolve_ctxt,
+          parser.unresolved_context,
           parser.comments,
         ) {
           let range = DependencyRange::from(class_stmt.span());
@@ -283,7 +296,7 @@ impl SideEffectsParserPlugin {
       }
       Statement::Var(var_stmt) => match var_stmt {
         VariableDeclaration::VarDecl(var_decl) => {
-          if !is_pure_var_decl(parser, var_decl, self.unresolve_ctxt, parser.comments) {
+          if !is_pure_var_decl(parser, var_decl, parser.unresolved_context, parser.comments) {
             let range = DependencyRange::from(var_stmt.span());
             let loc = parser.to_dependency_location(range);
             parser.side_effects_item = Some(SideEffectsBailoutItemWithSpan::new(
@@ -321,7 +334,7 @@ impl SideEffectsParserPlugin {
 }
 
 pub fn is_pure_pat<'a>(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   pat: &'a Pat,
   unresolved_ctxt: SyntaxContext,
   comments: Option<&'a dyn Comments>,
@@ -342,7 +355,7 @@ pub fn is_pure_pat<'a>(
 }
 
 pub fn is_pure_function<'a>(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   function: &'a Function,
   unresolved_ctxt: SyntaxContext,
   comments: Option<&'a dyn Comments>,
@@ -359,13 +372,13 @@ pub fn is_pure_function<'a>(
 }
 
 pub fn is_pure_expression<'a>(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   expr: &'a Expr,
   unresolved_ctxt: SyntaxContext,
   comments: Option<&'a dyn Comments>,
 ) -> bool {
   pub fn _is_pure_expression<'a>(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a Expr,
     unresolved_ctxt: SyntaxContext,
     comments: Option<&'a dyn Comments>,
@@ -393,7 +406,7 @@ pub fn is_pure_expression<'a>(
 }
 
 pub fn is_pure_class_member<'a>(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   member: &'a ClassMember,
   unresolved_ctxt: SyntaxContext,
   comments: Option<&'a dyn Comments>,
@@ -442,7 +455,7 @@ pub fn is_pure_class_member<'a>(
 }
 
 pub fn is_pure_decl(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   stmt: &Decl,
   unresolved_ctxt: SyntaxContext,
   comments: Option<&dyn Comments>,
@@ -461,7 +474,7 @@ pub fn is_pure_decl(
 }
 
 pub fn is_pure_class(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   class: &Class,
   unresolved_ctxt: SyntaxContext,
   comments: Option<&dyn Comments>,
@@ -471,7 +484,7 @@ pub fn is_pure_class(
   {
     return false;
   }
-  let is_pure_key = |parser: &mut JavascriptParser, key: &PropName| -> bool {
+  let is_pure_key = |parser: &mut JavascriptParserState, key: &PropName| -> bool {
     match key {
       PropName::BigInt(_) | PropName::Ident(_) | PropName::Str(_) | PropName::Num(_) => true,
       PropName::Computed(computed) => {
@@ -521,7 +534,7 @@ pub fn is_pure_class(
 }
 
 fn is_pure_var_decl<'a>(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   var: &'a VarDecl,
   unresolved_ctxt: SyntaxContext,
   comments: Option<&'a dyn Comments>,

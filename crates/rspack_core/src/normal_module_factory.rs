@@ -18,8 +18,7 @@ use crate::{
   ModuleRuleEnforce, ModuleRuleUse, ModuleRuleUseLoader, ModuleType, NormalModule, Parser,
   ParserOptions, RawModule, Resolve, ResolveArgs, ResolveOptionsWithDependencyType, ResolveResult,
   Resolver, ResolverFactory, ResourceData, ResourceParsedData, RunnerContext, RuntimeGlobals,
-  SharedPluginDriver,
-  diagnostics::EmptyDependency, module_rules_matcher, parse_resource, resolve,
+  SharedPluginDriver, diagnostics::EmptyDependency, module_rules_matcher, parse_resource, resolve,
   stringify_loaders_and_resource,
 };
 
@@ -610,8 +609,8 @@ module.exports = "data:,";
     ) = {
       let parser_option_contributors =
         self.collect_parser_option_contributors(&resolved_module_type, &resolved_module_rules);
-      let generator_option_contributors = self
-        .collect_generator_option_contributors(&resolved_module_type, &resolved_module_rules);
+      let generator_option_contributors =
+        self.collect_generator_option_contributors(&resolved_module_type, &resolved_module_rules);
       (
         self
           .merge_parser_options(&resolved_module_type, &parser_option_contributors)
@@ -785,10 +784,7 @@ module.exports = "data:,";
       .collect()
   }
 
-  fn push_option_contributor<'a, T>(
-    contributors: &mut SmallVec<[&'a T; 8]>,
-    contributor: &'a T,
-  ) {
+  fn push_option_contributor<'a, T>(contributors: &mut SmallVec<[&'a T; 8]>, contributor: &'a T) {
     if contributors
       .last()
       .is_none_or(|previous| !std::ptr::eq(*previous, contributor))
@@ -905,10 +901,16 @@ module.exports = "data:,";
       | ModuleType::AssetBytes => matches!(parser_options, ParserOptions::Asset(_)),
       ModuleType::Css => matches!(parser_options, ParserOptions::Css(_)),
       ModuleType::CssAuto => {
-        matches!(parser_options, ParserOptions::Css(_) | ParserOptions::CssAuto(_))
+        matches!(
+          parser_options,
+          ParserOptions::Css(_) | ParserOptions::CssAuto(_)
+        )
       }
       ModuleType::CssModule => {
-        matches!(parser_options, ParserOptions::Css(_) | ParserOptions::CssModule(_))
+        matches!(
+          parser_options,
+          ParserOptions::Css(_) | ParserOptions::CssModule(_)
+        )
       }
       ModuleType::JsAuto | ModuleType::JsDynamic | ModuleType::JsEsm => matches!(
         parser_options,
@@ -970,9 +972,7 @@ module.exports = "data:,";
           (ParserOptions::Css(a), ParserOptions::CssModule(b))
             if matches!(module_type, ModuleType::CssModule) =>
           {
-            ParserOptions::CssModule(
-              Into::<CssModuleParserOptions>::into(a.clone()).merge_from(b),
-            )
+            ParserOptions::CssModule(Into::<CssModuleParserOptions>::into(a.clone()).merge_from(b))
           }
           (ParserOptions::CssAuto(a), ParserOptions::CssAuto(b)) => {
             ParserOptions::CssAuto(a.merge_from(b))
@@ -986,21 +986,19 @@ module.exports = "data:,";
             | ParserOptions::JavascriptDynamic(b)
             | ParserOptions::JavascriptEsm(b),
           ) => ParserOptions::Javascript(a.merge_from(b)),
-          (ParserOptions::Json(a), ParserOptions::Json(b)) => {
-            ParserOptions::Json(a.merge_from(b))
-          }
+          (ParserOptions::Json(a), ParserOptions::Json(b)) => ParserOptions::Json(a.merge_from(b)),
           (global, _) => global,
         }
       })
     });
 
     match (module_type, resolved) {
-      (ModuleType::CssAuto, Some(ParserOptions::Css(options))) => {
-        Some(ParserOptions::CssAuto(Into::<CssAutoParserOptions>::into(options)))
-      }
-      (ModuleType::CssModule, Some(ParserOptions::Css(options))) => Some(
-        ParserOptions::CssModule(Into::<CssModuleParserOptions>::into(options)),
-      ),
+      (ModuleType::CssAuto, Some(ParserOptions::Css(options))) => Some(ParserOptions::CssAuto(
+        Into::<CssAutoParserOptions>::into(options),
+      )),
+      (ModuleType::CssModule, Some(ParserOptions::Css(options))) => Some(ParserOptions::CssModule(
+        Into::<CssModuleParserOptions>::into(options),
+      )),
       (_, resolved) => resolved,
     }
   }
@@ -1054,12 +1052,16 @@ module.exports = "data:,";
     });
 
     match (module_type, resolved) {
-      (ModuleType::AssetInline, Some(GeneratorOptions::Asset(options))) => Some(
-        GeneratorOptions::AssetInline(Into::<AssetInlineGeneratorOptions>::into(options)),
-      ),
-      (ModuleType::AssetResource, Some(GeneratorOptions::Asset(options))) => Some(
-        GeneratorOptions::AssetResource(Into::<AssetResourceGeneratorOptions>::into(options)),
-      ),
+      (ModuleType::AssetInline, Some(GeneratorOptions::Asset(options))) => {
+        Some(GeneratorOptions::AssetInline(Into::<
+          AssetInlineGeneratorOptions,
+        >::into(options)))
+      }
+      (ModuleType::AssetResource, Some(GeneratorOptions::Asset(options))) => {
+        Some(GeneratorOptions::AssetResource(Into::<
+          AssetResourceGeneratorOptions,
+        >::into(options)))
+      }
       (ModuleType::CssAuto, Some(GeneratorOptions::Css(options))) => Some(
         GeneratorOptions::CssAuto(Into::<CssAutoGeneratorOptions>::into(options)),
       ),

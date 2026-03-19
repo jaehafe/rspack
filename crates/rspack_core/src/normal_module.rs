@@ -813,7 +813,9 @@ impl Module for NormalModule {
     mg: &ModuleGraph,
     cg: &ChunkGraph,
   ) -> Option<Cow<'static, str>> {
-    self.generator.get_concatenation_bailout_reason(self, mg, cg)
+    self
+      .generator
+      .get_concatenation_bailout_reason(self, mg, cg)
   }
 
   fn factory_meta(&self) -> Option<&FactoryMeta> {

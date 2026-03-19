@@ -8,16 +8,13 @@ use rspack_collections::IdentifierSet;
 use rspack_core::{
   Compilation, CompilationOptimizeDependencies, CompilationParams, CompilationProcessAssets,
   CompilerCompilation, DependencyType, ExportsInfoArtifact, FactoryMeta, ModuleType,
-  NormalModuleFactoryParser, Parser, ParserOptions, Plugin,
-  SideEffectsOptimizeArtifact,
+  NormalModuleFactoryParser, Parser, ParserOptions, Plugin, SideEffectsOptimizeArtifact,
   build_module_graph::BuildModuleGraphArtifact,
   rspack_sources::{BoxSource, ReplaceSource, SourceExt},
 };
 use rspack_error::{Diagnostic, Result};
 use rspack_hook::{plugin, plugin_hook};
-use rspack_plugin_javascript::{
-  BoxJavascriptParserPlugin, parser_and_generator::JavaScriptParser,
-};
+use rspack_plugin_javascript::{BoxJavascriptParserPlugin, parser_and_generator::JavaScriptParser};
 use rustc_hash::FxHashMap as HashMap;
 
 static RSTEST_FLAG_RE: LazyLock<Regex> = LazyLock::new(|| {

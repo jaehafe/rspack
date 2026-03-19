@@ -14,7 +14,7 @@ use crate::utils::eval::{BasicEvaluatedExpression, TemplateStringKind};
 // caller should consider whether need to walk expressions
 pub fn create_context_dependency(
   param: &BasicEvaluatedExpression,
-  parser: &mut crate::visitors::JavascriptParser,
+  parser: &mut crate::visitors::JavascriptParserState,
 ) -> ContextModuleScanResult {
   let mut critical = None;
   let wrapped_context_reg_exp = parser

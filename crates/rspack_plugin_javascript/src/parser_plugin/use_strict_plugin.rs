@@ -4,14 +4,14 @@ use rspack_core::ConstDependency;
 use swc_core::atoms::wtf8::Wtf8;
 
 use super::{JavascriptParserPlugin, JavascriptParserPluginContext, JavascriptParserProgram};
-use crate::visitors::JavascriptParser;
+use crate::visitors::JavascriptParserState;
 
 pub struct UseStrictPlugin;
 
 impl UseStrictPlugin {
   fn program(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ast: &swc_core::ecma::ast::Program,
   ) -> Option<bool> {
     let first = match ast {
@@ -38,7 +38,7 @@ impl UseStrictPlugin {
 crate::impl_javascript_parser_hook!(
   UseStrictPlugin,
   JavascriptParserProgram,
-  program(parser: &mut JavascriptParser, ast: &swc_core::ecma::ast::Program) -> bool
+  program(parser: &mut JavascriptParserState, ast: &swc_core::ecma::ast::Program) -> bool
 );
 
 impl JavascriptParserPlugin for UseStrictPlugin {

@@ -12,7 +12,7 @@ use swc_core::common::{
   comments::{Comment, CommentKind, Comments},
 };
 
-use crate::visitors::{JavascriptParser, create_traceable_error};
+use crate::visitors::{JavascriptParserState, create_traceable_error};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RspackComment {
@@ -161,7 +161,7 @@ static EXPORT_NAME_REGEXP: LazyLock<regex::Regex> =
   LazyLock::new(|| regex::Regex::new(r#"^["`'](\w+)["`']$"#).expect("invalid regex"));
 
 pub fn try_extract_magic_comment(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   error_span: Span,
   span: Span,
 ) -> RspackCommentMap {

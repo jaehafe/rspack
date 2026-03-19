@@ -4,8 +4,8 @@ mod util;
 
 use rspack_core::{
   AsyncDependenciesBlock, BoxDependency, BoxDependencyTemplate, BuildInfo, BuildMeta,
-  CompilerOptions, FactoryMeta, ModuleIdentifier, ModuleLayer, ModuleType, ParseMeta,
-  ParserOptions, ResourceData, SideEffectsBailoutItemWithSpan,
+  CompilerOptions, FactoryMeta, JavascriptParserOptions, ModuleIdentifier, ModuleLayer, ModuleType,
+  ParseMeta, ResourceData, SideEffectsBailoutItemWithSpan,
 };
 use rspack_error::Diagnostic;
 use rspack_javascript_compiler::ast::Program;
@@ -17,12 +17,12 @@ pub use self::{
   parser::{
     AllowedMemberTypes, AtomMembers, CallExpressionInfo, CallHooksName,
     DestructuringAssignmentProperties, DestructuringAssignmentProperty, ExportedVariableInfo,
-    JavascriptParser, MemberExpressionInfo, MemberRanges, OptionalMembers, RootName,
+    JavascriptParserState, MemberExpressionInfo, MemberRanges, OptionalMembers, RootName,
     ScopeTerminated, TagInfoData, TopLevelScope, ast::*, estree::*,
   },
   util::*,
 };
-use crate::{BoxJavascriptParserPlugin, parser_and_generator::ParserRuntimeRequirementsData};
+use crate::parser_and_generator::{JavaScriptParser, ParserRuntimeRequirementsData};
 
 pub struct ScanDependenciesResult {
   pub dependencies: Vec<BoxDependency>,
@@ -38,25 +38,29 @@ pub fn scan_dependencies(
   program: &Program,
   resource_data: &ResourceData,
   compiler_options: &CompilerOptions,
+  javascript_options: &JavascriptParserOptions,
   module_type: &ModuleType,
   module_layer: Option<&ModuleLayer>,
   factory_meta: Option<&FactoryMeta>,
   build_meta: &mut BuildMeta,
   build_info: &mut BuildInfo,
   module_identifier: ModuleIdentifier,
-  module_parser_options: Option<&ParserOptions>,
   semicolons: &mut FxHashSet<BytePos>,
   unresolved_mark: Mark,
-  parser_plugins: &[BoxJavascriptParserPlugin],
+  parser: &JavaScriptParser,
   parse_meta: ParseMeta,
   parser_runtime_requirements: &ParserRuntimeRequirementsData,
 ) -> Result<ScanDependenciesResult, Vec<Diagnostic>> {
-  let mut parser = JavascriptParser::new(
+  let hooks = parser.get_or_init_hooks(
+    compiler_options,
+    javascript_options,
+    module_type,
+    parser_runtime_requirements,
+  );
+  let mut parser = JavascriptParserState::new(
     source,
     compiler_options,
-    module_parser_options
-      .and_then(|p| p.get_javascript())
-      .expect("should at least have a global javascript parser options"),
+    javascript_options,
     program.comments.as_ref().map(|c| c as &dyn Comments),
     &module_identifier,
     module_type,
@@ -66,10 +70,10 @@ pub fn scan_dependencies(
     build_meta,
     build_info,
     semicolons,
-    unresolved_mark,
-    parser_plugins,
     parse_meta,
     parser_runtime_requirements,
+    hooks,
+    unresolved_mark,
   );
 
   parser.walk_program(program.get_inner_program());

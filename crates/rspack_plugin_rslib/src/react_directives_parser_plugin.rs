@@ -3,7 +3,7 @@ use std::sync::Arc;
 use rspack_core::ConstDependency;
 use rspack_plugin_javascript::{
   JavascriptParserPlugin, JavascriptParserPluginContext, JavascriptParserProgram,
-  visitors::JavascriptParser,
+  visitors::JavascriptParserState,
 };
 use swc_core::ecma::ast::{Expr, Lit, ModuleItem, Program, Stmt};
 
@@ -32,7 +32,7 @@ impl ReactDirectivesParserPlugin {
 }
 
 impl ReactDirectivesParserPlugin {
-  fn program(&self, parser: &mut JavascriptParser, ast: &Program) -> Option<bool> {
+  fn program(&self, parser: &mut JavascriptParserState, ast: &Program) -> Option<bool> {
     let mut directives = Vec::new();
 
     match ast {
@@ -73,7 +73,7 @@ struct ReactDirectivesParserPluginProgramTap(Arc<ReactDirectivesParserPlugin>);
 impl JavascriptParserProgram for ReactDirectivesParserPluginProgramTap {
   fn run(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ast: &Program,
   ) -> rspack_error::Result<Option<bool>> {
     Ok(self.0.program(parser, ast))

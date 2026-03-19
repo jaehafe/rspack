@@ -19,7 +19,7 @@ use swc_core::{
 };
 
 use super::{
-  AllowedMemberTypes, CallHooksName, JavascriptParser, MemberExpressionInfo, RootName,
+  AllowedMemberTypes, CallHooksName, JavascriptParserState, MemberExpressionInfo, RootName,
   ScopeTerminated, TopLevelScope,
   estree::{ClassDeclOrExpr, MaybeNamedClassDecl, MaybeNamedFunctionDecl, Statement},
 };
@@ -35,7 +35,7 @@ fn warp_ident_to_pat(ident: Ident) -> Pat {
   Pat::Ident(ident.into())
 }
 
-impl JavascriptParser<'_> {
+impl JavascriptParserState<'_> {
   fn in_block_scope<F>(&mut self, in_executed_path: bool, f: F)
   where
     F: FnOnce(&mut Self),
@@ -1000,7 +1000,10 @@ impl JavascriptParser<'_> {
     args: impl Iterator<Item = &'a Expr>,
     current_this: Option<&'a Expr>,
   ) {
-    fn get_var_name(parser: &mut JavascriptParser, expr: &Expr) -> Option<ExportedVariableInfo> {
+    fn get_var_name(
+      parser: &mut JavascriptParserState,
+      expr: &Expr,
+    ) -> Option<ExportedVariableInfo> {
       if let Some(rename_identifier) = parser.get_rename_identifier(expr)
         && let drive = parser.plugin_drive.clone()
         && rename_identifier
@@ -1410,7 +1413,7 @@ impl JavascriptParser<'_> {
       self.walk_expression(&expr.right);
       self.enter_assign_target_pattern(
         Cow::Borrowed(pat),
-        |this: &mut JavascriptParser<'_>, ident| {
+        |this: &mut JavascriptParserState<'_>, ident| {
           if !ident
             .sym
             .call_hooks_name(this, |this, for_name| drive.assign(this, expr, for_name))

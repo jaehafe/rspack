@@ -27,7 +27,8 @@ use crate::{
   parser_plugin::require_ensure_dependencies_block_parse_plugin::GetFunctionExpression,
   utils::eval::BasicEvaluatedExpression,
   visitors::{
-    JavascriptParser, Statement, context_reg_exp, create_context_dependency, create_traceable_error,
+    JavascriptParserState, Statement, context_reg_exp, create_context_dependency,
+    create_traceable_error,
   },
 };
 
@@ -43,7 +44,7 @@ pub struct AMDRequireDependenciesBlockParserPlugin;
 impl AMDRequireDependenciesBlockParserPlugin {
   fn call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -58,7 +59,7 @@ impl AMDRequireDependenciesBlockParserPlugin {
 crate::impl_javascript_parser_hook!(
   AMDRequireDependenciesBlockParserPlugin,
   JavascriptParserCall,
-  call(parser: &mut JavascriptParser, call_expr: &CallExpr, for_name: &str) -> bool
+  call(parser: &mut JavascriptParserState, call_expr: &CallExpr, for_name: &str) -> bool
 );
 
 impl JavascriptParserPlugin for AMDRequireDependenciesBlockParserPlugin {
@@ -70,7 +71,7 @@ impl JavascriptParserPlugin for AMDRequireDependenciesBlockParserPlugin {
 impl AMDRequireDependenciesBlockParserPlugin {
   fn process_array(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     block_deps: &mut Vec<BoxDependency>,
     call_expr: &CallExpr,
     param: &BasicEvaluatedExpression,
@@ -113,7 +114,7 @@ impl AMDRequireDependenciesBlockParserPlugin {
 
   fn process_item(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     block_deps: &mut Vec<BoxDependency>,
     call_expr: &CallExpr,
     param: &BasicEvaluatedExpression,
@@ -176,7 +177,7 @@ impl AMDRequireDependenciesBlockParserPlugin {
 
   fn process_context(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     block_deps: &mut Vec<BoxDependency>,
     call_expr: &CallExpr,
     param: &BasicEvaluatedExpression,
@@ -241,7 +242,7 @@ impl AMDRequireDependenciesBlockParserPlugin {
 
   fn process_function_argument(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     func_arg: &ExprOrSpread,
   ) -> bool {
     let mut bind_this = true;
@@ -290,7 +291,7 @@ impl AMDRequireDependenciesBlockParserPlugin {
 
   fn process_call_require(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
   ) -> Option<bool> {
     if call_expr.args.is_empty() {

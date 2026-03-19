@@ -4,7 +4,7 @@ use swc_core::{
 };
 
 use super::{
-  JavascriptParser,
+  JavascriptParserState,
   estree::{
     ExportDefaultDeclaration, ExportDefaultExpression, ExportLocal, ExportNamedDeclaration,
     MaybeNamedClassDecl, Statement,
@@ -15,7 +15,7 @@ use crate::{
   visitors::{VariableDeclaration, VariableDeclarationKind},
 };
 
-impl JavascriptParser<'_> {
+impl JavascriptParserState<'_> {
   pub fn block_pre_walk_module_items(&mut self, statements: &Vec<ModuleItem>) {
     for statement in statements {
       self.block_pre_walk_module_item(statement);

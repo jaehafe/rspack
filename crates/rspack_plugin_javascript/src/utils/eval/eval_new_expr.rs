@@ -2,11 +2,11 @@ use rspack_util::SpanExt;
 use swc_core::{atoms::Atom, ecma::ast::NewExpr};
 
 use super::BasicEvaluatedExpression;
-use crate::{utils::eval, visitors::JavascriptParser};
+use crate::{utils::eval, visitors::JavascriptParserState};
 
 #[inline]
 pub fn eval_new_expression<'a>(
-  scanner: &mut JavascriptParser,
+  scanner: &mut JavascriptParserState,
   expr: &'a NewExpr,
 ) -> Option<BasicEvaluatedExpression<'a>> {
   let ident = expr.callee.as_ident()?;

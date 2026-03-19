@@ -9,7 +9,7 @@ use super::{
 };
 use crate::{
   utils::eval::{BasicEvaluatedExpression, evaluate_to_identifier},
-  visitors::{JavascriptParser, expr_name},
+  visitors::{JavascriptParserState, expr_name},
 };
 
 pub struct CommonJsPlugin;
@@ -17,7 +17,7 @@ pub struct CommonJsPlugin;
 impl CommonJsPlugin {
   fn evaluate_identifier(
     &self,
-    _parser: &mut JavascriptParser,
+    _parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32,
@@ -37,7 +37,7 @@ impl CommonJsPlugin {
 
   fn r#typeof(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::UnaryExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -54,7 +54,7 @@ impl CommonJsPlugin {
 
   fn member(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     _expr: &MemberExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -82,7 +82,7 @@ crate::impl_javascript_parser_hook!(
   CommonJsPlugin,
   JavascriptParserEvaluateIdentifier,
   evaluate_identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32
@@ -92,7 +92,7 @@ crate::impl_javascript_parser_hook!(
   CommonJsPlugin,
   JavascriptParserTypeof,
   r#typeof(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::UnaryExpr,
     for_name: &str
   ) -> bool
@@ -100,7 +100,7 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   CommonJsPlugin,
   JavascriptParserMember,
-  member(parser: &mut JavascriptParser, expr: &MemberExpr, for_name: &str) -> bool
+  member(parser: &mut JavascriptParserState, expr: &MemberExpr, for_name: &str) -> bool
 );
 
 impl JavascriptParserPlugin for CommonJsPlugin {

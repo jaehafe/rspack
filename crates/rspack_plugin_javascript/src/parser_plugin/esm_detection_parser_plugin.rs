@@ -16,10 +16,10 @@ use super::{
 use crate::{
   dependency::ESMCompatibilityDependency,
   utils::eval::BasicEvaluatedExpression,
-  visitors::{JavascriptParser, create_traceable_error},
+  visitors::{JavascriptParserState, create_traceable_error},
 };
 
-impl JavascriptParser<'_> {
+impl JavascriptParserState<'_> {
   fn throw_top_level_await_error(&mut self, msg: String, span: Span) {
     self.add_error(
       create_traceable_error(
@@ -54,7 +54,7 @@ fn is_non_esm_identifier(name: &str) -> bool {
 
 // Port from https://github.com/webpack/webpack/blob/main/lib/dependencies/HarmonyDetectionParserPlugin.js
 impl ESMDetectionParserPlugin {
-  fn program(&self, parser: &mut JavascriptParser, ast: &Program) -> Option<bool> {
+  fn program(&self, parser: &mut JavascriptParserState, ast: &Program) -> Option<bool> {
     let is_strict_esm = matches!(parser.module_type, ModuleType::JsEsm);
     let is_esm = is_strict_esm
       || matches!(ast, Program::Module(module) if module.body.iter().any(|s| matches!(s, ModuleItem::ModuleDecl(_))));
@@ -77,7 +77,7 @@ impl ESMDetectionParserPlugin {
 
   fn top_level_await_expr(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::AwaitExpr,
   ) {
     let lo = expr.span_lo();
@@ -88,7 +88,7 @@ impl ESMDetectionParserPlugin {
 
   fn top_level_for_of_await_stmt(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     stmt: &swc_core::ecma::ast::ForOfStmt,
   ) {
     let offset = 4; // "for ".len();
@@ -100,7 +100,7 @@ impl ESMDetectionParserPlugin {
 
   fn evaluate_typeof<'a>(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a UnaryExpr,
     for_name: &str,
   ) -> Option<BasicEvaluatedExpression<'a>> {
@@ -110,7 +110,7 @@ impl ESMDetectionParserPlugin {
 
   fn r#typeof(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     _expr: &UnaryExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -119,7 +119,7 @@ impl ESMDetectionParserPlugin {
 
   fn identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     _ident: &Ident,
     for_name: &str,
   ) -> Option<bool> {
@@ -128,7 +128,7 @@ impl ESMDetectionParserPlugin {
 
   fn call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     _expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -139,18 +139,18 @@ impl ESMDetectionParserPlugin {
 crate::impl_javascript_parser_hook!(
   ESMDetectionParserPlugin,
   JavascriptParserProgram,
-  program(parser: &mut JavascriptParser, ast: &Program) -> bool
+  program(parser: &mut JavascriptParserState, ast: &Program) -> bool
 );
 crate::impl_javascript_parser_hook!(
   ESMDetectionParserPlugin,
   JavascriptParserTopLevelAwaitExpr,
-  top_level_await_expr(parser: &mut JavascriptParser, expr: &swc_core::ecma::ast::AwaitExpr)
+  top_level_await_expr(parser: &mut JavascriptParserState, expr: &swc_core::ecma::ast::AwaitExpr)
 );
 crate::impl_javascript_parser_hook!(
   ESMDetectionParserPlugin,
   JavascriptParserTopLevelForOfAwaitStmt,
   top_level_for_of_await_stmt(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     stmt: &swc_core::ecma::ast::ForOfStmt
   )
 );
@@ -159,7 +159,7 @@ crate::impl_javascript_parser_hook!(
   JavascriptParserEvaluateTypeof,
   <'a>,
   evaluate_typeof(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a UnaryExpr,
     for_name: &str
   ) -> BasicEvaluatedExpression<'a>
@@ -167,18 +167,18 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   ESMDetectionParserPlugin,
   JavascriptParserTypeof,
-  r#typeof(parser: &mut JavascriptParser, expr: &UnaryExpr, for_name: &str) -> bool
+  r#typeof(parser: &mut JavascriptParserState, expr: &UnaryExpr, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   ESMDetectionParserPlugin,
   JavascriptParserIdentifier,
-  identifier(parser: &mut JavascriptParser, ident: &Ident, for_name: &str) -> bool
+  identifier(parser: &mut JavascriptParserState, ident: &Ident, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   ESMDetectionParserPlugin,
   JavascriptParserCall,
   call(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str
   ) -> bool

@@ -11,14 +11,14 @@ use super::{
   JavascriptParserCall, JavascriptParserPlugin, JavascriptParserPluginContext,
   JavascriptParserTypeof,
 };
-use crate::{dependency::IsIncludeDependency, visitors::JavascriptParser};
+use crate::{dependency::IsIncludeDependency, visitors::JavascriptParserState};
 
 const IS_INCLUDED: &str = "__webpack_is_included__";
 
 pub struct IsIncludedPlugin;
 
 impl IsIncludedPlugin {
-  fn call(&self, parser: &mut JavascriptParser, expr: &CallExpr, name: &str) -> Option<bool> {
+  fn call(&self, parser: &mut JavascriptParserState, expr: &CallExpr, name: &str) -> Option<bool> {
     if name != IS_INCLUDED || expr.args.len() != 1 || expr.args[0].spread.is_some() {
       return None;
     }
@@ -38,7 +38,7 @@ impl IsIncludedPlugin {
 
   fn r#typeof(
     &self,
-    parser: &mut JavascriptParser<'_>,
+    parser: &mut JavascriptParserState<'_>,
     expr: &UnaryExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -55,12 +55,12 @@ impl IsIncludedPlugin {
 crate::impl_javascript_parser_hook!(
   IsIncludedPlugin,
   JavascriptParserCall,
-  call(parser: &mut JavascriptParser, expr: &CallExpr, name: &str) -> bool
+  call(parser: &mut JavascriptParserState, expr: &CallExpr, name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   IsIncludedPlugin,
   JavascriptParserTypeof,
-  r#typeof(parser: &mut JavascriptParser<'_>, expr: &UnaryExpr, for_name: &str) -> bool
+  r#typeof(parser: &mut JavascriptParserState<'_>, expr: &UnaryExpr, for_name: &str) -> bool
 );
 
 impl JavascriptParserPlugin for IsIncludedPlugin {

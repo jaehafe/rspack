@@ -10,7 +10,7 @@ use swc_core::{
   },
 };
 
-use crate::visitors::{JavascriptParser, Statement, VariableDeclarationKind};
+use crate::visitors::{JavascriptParserState, Statement, VariableDeclarationKind};
 
 /// Collects hoisted `var` and (in non-strict) function/class declaration idents from a statement.
 pub fn get_hoisted_declarations<'ast>(
@@ -133,7 +133,7 @@ pub fn get_hoisted_declarations<'ast>(
   declarations
 }
 
-pub fn statement_if(scanner: &mut JavascriptParser, stmt: &IfStmt) -> Option<bool> {
+pub fn statement_if(scanner: &mut JavascriptParserState, stmt: &IfStmt) -> Option<bool> {
   let param = scanner.evaluate_expression(&stmt.test);
   let boolean = param.as_bool()?;
   if !param.could_have_side_effects() {

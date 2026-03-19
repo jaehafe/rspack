@@ -3,14 +3,14 @@ use std::sync::Arc;
 use rspack_core::ConstDependency;
 use rspack_plugin_javascript::{
   JavascriptParserPlugin, JavascriptParserPluginContext, JavascriptParserProgram,
-  visitors::JavascriptParser,
+  visitors::JavascriptParserState,
 };
 use swc_core::ecma::ast::Program;
 
 pub struct HashbangParserPlugin;
 
 impl HashbangParserPlugin {
-  fn program(&self, parser: &mut JavascriptParser, ast: &Program) -> Option<bool> {
+  fn program(&self, parser: &mut JavascriptParserState, ast: &Program) -> Option<bool> {
     let hashbang = ast
       .as_module()
       .and_then(|m| m.shebang.as_ref())
@@ -52,7 +52,7 @@ struct HashbangParserPluginProgramTap(Arc<HashbangParserPlugin>);
 impl JavascriptParserProgram for HashbangParserPluginProgramTap {
   fn run(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ast: &Program,
   ) -> rspack_error::Result<Option<bool>> {
     Ok(self.0.program(parser, ast))

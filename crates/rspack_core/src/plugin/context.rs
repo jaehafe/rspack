@@ -2,8 +2,8 @@ use rspack_util::fx_hash::FxDashMap;
 
 use crate::{
   CompilationHooks, CompilerHooks, CompilerOptions, ConcatenatedModuleHooks,
-  ContextModuleFactoryHooks, Generator, GeneratorOptions, ModuleType,
-  NormalModuleFactoryHooks, NormalModuleHooks, Parser, ParserOptions,
+  ContextModuleFactoryHooks, Generator, GeneratorOptions, ModuleType, NormalModuleFactoryHooks,
+  NormalModuleHooks, Parser, ParserOptions,
 };
 
 pub type BoxedParser = Box<dyn Parser>;

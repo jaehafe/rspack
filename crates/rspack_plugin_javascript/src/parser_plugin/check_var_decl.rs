@@ -7,7 +7,7 @@ use swc_core::{
 
 use super::{JavascriptParserDeclarator, JavascriptParserPlugin, JavascriptParserPluginContext};
 use crate::visitors::{
-  JavascriptParser, VariableDeclaration, VariableDeclarationKind, create_traceable_error,
+  JavascriptParserState, VariableDeclaration, VariableDeclarationKind, create_traceable_error,
 };
 
 fn is_reserved_word_in_strict(word: &str) -> bool {
@@ -29,7 +29,7 @@ fn is_reserved_word_in_strict(word: &str) -> bool {
 pub struct CheckVarDeclaratorIdent;
 
 impl CheckVarDeclaratorIdent {
-  fn check_ident(&self, parser: &mut JavascriptParser, ident: &Ident) {
+  fn check_ident(&self, parser: &mut JavascriptParserState, ident: &Ident) {
     if is_reserved_word_in_strict(ident.sym.as_str()) {
       if parser.is_strict() {
         parser.add_error(
@@ -55,7 +55,7 @@ impl CheckVarDeclaratorIdent {
     }
   }
 
-  fn check_var_decl_pat(&self, parser: &mut JavascriptParser, pat: &Pat) {
+  fn check_var_decl_pat(&self, parser: &mut JavascriptParserState, pat: &Pat) {
     match pat {
       Pat::Ident(ident) => {
         self.check_ident(parser, ident);
@@ -94,7 +94,7 @@ impl CheckVarDeclaratorIdent {
 impl CheckVarDeclaratorIdent {
   fn declarator(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     _expr: &swc_core::ecma::ast::VarDeclarator,
     stmt: VariableDeclaration<'_>,
   ) -> Option<bool> {
@@ -115,7 +115,7 @@ crate::impl_javascript_parser_hook!(
   CheckVarDeclaratorIdent,
   JavascriptParserDeclarator,
   declarator(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::VarDeclarator,
     stmt: VariableDeclaration<'_>
   ) -> bool

@@ -18,13 +18,13 @@ use crate::{
     JavascriptParserPlugin, JavascriptParserPluginContext,
   },
   utils::eval,
-  visitors::{JavascriptParser, expr_name},
+  visitors::{JavascriptParserState, expr_name},
 };
 
 type CreateDependency = fn(Atom, DependencyRange) -> BoxDependency;
 
 fn extract_deps(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   call_expr: &CallExpr,
   create_dependency: CreateDependency,
 ) -> Vec<BoxDependency> {
@@ -54,7 +54,7 @@ fn extract_deps(
   dependencies
 }
 
-impl JavascriptParser<'_> {
+impl JavascriptParserState<'_> {
   fn create_hmr_expression_handler(&mut self, span: Span) {
     self.build_info.module_concatenation_bailout = Some(String::from("Hot Module Replacement"));
     let range = DependencyRange::from(span);
@@ -140,7 +140,7 @@ impl ModuleHotReplacementParserPlugin {
 impl ModuleHotReplacementParserPlugin {
   fn evaluate_identifier(
     &self,
-    _parser: &mut JavascriptParser,
+    _parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32,
@@ -160,7 +160,7 @@ impl ModuleHotReplacementParserPlugin {
 
   fn member(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -174,7 +174,7 @@ impl ModuleHotReplacementParserPlugin {
 
   fn call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -207,7 +207,7 @@ impl ImportMetaHotReplacementParserPlugin {
 impl ImportMetaHotReplacementParserPlugin {
   fn evaluate_identifier(
     &self,
-    _parser: &mut JavascriptParser,
+    _parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32,
@@ -227,7 +227,7 @@ impl ImportMetaHotReplacementParserPlugin {
 
   fn member(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -241,7 +241,7 @@ impl ImportMetaHotReplacementParserPlugin {
 
   fn call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -263,7 +263,7 @@ crate::impl_javascript_parser_hook!(
   ModuleHotReplacementParserPlugin,
   JavascriptParserEvaluateIdentifier,
   evaluate_identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32
@@ -273,7 +273,7 @@ crate::impl_javascript_parser_hook!(
   ModuleHotReplacementParserPlugin,
   JavascriptParserMember,
   member(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str
   ) -> bool
@@ -282,7 +282,7 @@ crate::impl_javascript_parser_hook!(
   ModuleHotReplacementParserPlugin,
   JavascriptParserCall,
   call(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str
   ) -> bool
@@ -291,7 +291,7 @@ crate::impl_javascript_parser_hook!(
   ImportMetaHotReplacementParserPlugin,
   JavascriptParserEvaluateIdentifier,
   evaluate_identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32
@@ -301,7 +301,7 @@ crate::impl_javascript_parser_hook!(
   ImportMetaHotReplacementParserPlugin,
   JavascriptParserMember,
   member(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str
   ) -> bool
@@ -310,7 +310,7 @@ crate::impl_javascript_parser_hook!(
   ImportMetaHotReplacementParserPlugin,
   JavascriptParserCall,
   call(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str
   ) -> bool

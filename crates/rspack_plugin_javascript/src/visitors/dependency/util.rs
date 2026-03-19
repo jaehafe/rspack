@@ -8,7 +8,7 @@ use swc_core::{
   ecma::ast::{Expr, MemberExpr, OptChainBase},
 };
 
-use super::JavascriptParser;
+use super::JavascriptParserState;
 
 static DEFAULT_CONTEXT_REGEXP: LazyLock<RspackRegex> =
   LazyLock::new(|| RspackRegex::new(r"^\.\/.*$").expect("reg failed"));
@@ -66,7 +66,7 @@ pub fn context_reg_exp(
   expr: &str,
   flags: &str,
   error_span: Option<DependencyRange>,
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
 ) -> Option<RspackRegex> {
   if expr.is_empty() {
     return None;
@@ -78,7 +78,7 @@ pub fn context_reg_exp(
 pub fn clean_regexp_in_context_module(
   regexp: RspackRegex,
   error_span: Option<DependencyRange>,
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
 ) -> Option<RspackRegex> {
   if regexp.sticky() || regexp.global() {
     if let Some(error_span) = error_span {

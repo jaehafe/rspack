@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use rspack_plugin_javascript::{
   JavascriptParserMember, JavascriptParserPlugin, JavascriptParserPluginContext,
-  JavascriptParserTypeof, visitors::JavascriptParser,
+  JavascriptParserTypeof, visitors::JavascriptParserState,
 };
 use swc_core::ecma::ast::MemberExpr;
 
@@ -22,7 +22,7 @@ impl RslibParserPlugin {
 impl RslibParserPlugin {
   fn member(
     &self,
-    _parser: &mut JavascriptParser,
+    _parser: &mut JavascriptParserState,
     _member_expr: &MemberExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -40,7 +40,7 @@ impl RslibParserPlugin {
 
   fn r#typeof(
     &self,
-    _parser: &mut JavascriptParser,
+    _parser: &mut JavascriptParserState,
     _expr: &swc_core::ecma::ast::UnaryExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -58,7 +58,7 @@ struct RslibParserPluginTap(Arc<RslibParserPlugin>);
 impl JavascriptParserMember for RslibParserPluginTap {
   fn run(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     member_expr: &MemberExpr,
     for_name: &str,
   ) -> rspack_error::Result<Option<bool>> {
@@ -69,7 +69,7 @@ impl JavascriptParserMember for RslibParserPluginTap {
 impl JavascriptParserTypeof for RslibParserPluginTap {
   fn run(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::UnaryExpr,
     for_name: &str,
   ) -> rspack_error::Result<Option<bool>> {

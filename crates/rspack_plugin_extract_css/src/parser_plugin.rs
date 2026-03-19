@@ -3,7 +3,7 @@ use std::sync::Arc;
 use rspack_core::{BoxDependency, DependencyRange};
 use rspack_plugin_javascript::{
   JavascriptParserFinish, JavascriptParserPlugin, JavascriptParserPluginContext,
-  visitors::JavascriptParser,
+  visitors::JavascriptParserState,
 };
 use rspack_util::fx_hash::FxDashMap;
 use serde::Deserialize;
@@ -29,7 +29,7 @@ pub struct PluginCssExtractParserPlugin {
 }
 
 impl PluginCssExtractParserPlugin {
-  fn finish(&self, parser: &mut JavascriptParser) -> Option<bool> {
+  fn finish(&self, parser: &mut JavascriptParserState) -> Option<bool> {
     let deps = if let Some(data_str) = parser.parse_meta.remove(PLUGIN_NAME)
       && let Ok(data_str) = (data_str as Box<dyn std::any::Any>)
         .downcast::<String>()
@@ -92,7 +92,7 @@ impl PluginCssExtractParserPlugin {
 struct PluginCssExtractParserPluginFinishTap(Arc<PluginCssExtractParserPlugin>);
 
 impl JavascriptParserFinish for PluginCssExtractParserPluginFinishTap {
-  fn run(&self, parser: &mut JavascriptParser) -> rspack_error::Result<Option<bool>> {
+  fn run(&self, parser: &mut JavascriptParserState) -> rspack_error::Result<Option<bool>> {
     Ok(self.0.finish(parser))
   }
 }

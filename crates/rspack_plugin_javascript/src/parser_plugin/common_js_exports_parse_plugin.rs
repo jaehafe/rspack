@@ -23,7 +23,7 @@ use crate::{
     ExportsBase, ModuleDecoratorDependency,
   },
   utils::eval::{self, BasicEvaluatedExpression},
-  visitors::JavascriptParser,
+  visitors::JavascriptParserState,
 };
 
 fn get_value_of_property_description(expr: &Expr) -> Option<&Expr> {
@@ -77,7 +77,7 @@ fn is_lit_truthy_literal(lit: &Lit) -> bool {
   }
 }
 
-impl JavascriptParser<'_> {
+impl JavascriptParserState<'_> {
   // can't scan `__esModule` value
   fn bailout(&mut self) {
     if matches!(self.parser_exports_state, Some(true)) {
@@ -134,7 +134,7 @@ impl JavascriptParser<'_> {
 }
 
 fn parse_require_call<'a>(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   mut expr: &'a Expr,
 ) -> Option<(BasicEvaluatedExpression<'a>, Vec<Atom>)> {
   let mut ids = Vec::new();
@@ -170,7 +170,7 @@ fn parse_require_call<'a>(
 }
 
 fn handle_assign_export(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   assign_expr: &AssignExpr,
   remaining: &[Atom],
   base: ExportsBase,
@@ -239,7 +239,7 @@ fn handle_assign_export(
 }
 
 fn handle_access_export(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   expr_span: Span,
   remaining: &[Atom],
   remaining_optionals: &[bool],
@@ -274,7 +274,7 @@ impl CommonJsExportsParserPlugin {
     Self { skip_in_esm }
   }
 
-  fn should_skip_handler(&self, parser: &JavascriptParser) -> bool {
+  fn should_skip_handler(&self, parser: &JavascriptParserState) -> bool {
     self.skip_in_esm && parser.is_esm
   }
 }
@@ -282,7 +282,7 @@ impl CommonJsExportsParserPlugin {
 impl CommonJsExportsParserPlugin {
   fn assign_member_chain(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     assign_expr: &AssignExpr,
     remaining: &[Atom],
     for_name: &str,
@@ -313,7 +313,7 @@ impl CommonJsExportsParserPlugin {
 
   fn call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -377,7 +377,7 @@ impl CommonJsExportsParserPlugin {
 
   fn identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &Ident,
     for_name: &str,
   ) -> Option<bool> {
@@ -409,7 +409,7 @@ impl CommonJsExportsParserPlugin {
 
   fn this(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::ThisExpr,
     _for_name: &str,
   ) -> Option<bool> {
@@ -426,7 +426,7 @@ impl CommonJsExportsParserPlugin {
 
   fn member(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &MemberExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -450,7 +450,7 @@ impl CommonJsExportsParserPlugin {
 
   fn member_chain(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &MemberExpr,
     for_name: &str,
     members: &[Atom],
@@ -502,7 +502,7 @@ impl CommonJsExportsParserPlugin {
 
   fn call_member_chain(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &CallExpr,
     for_name: &str,
     members: &[Atom],
@@ -554,7 +554,7 @@ impl CommonJsExportsParserPlugin {
 
   fn evaluate_typeof<'a>(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a UnaryExpr,
     for_name: &str,
   ) -> Option<BasicEvaluatedExpression<'a>> {
@@ -576,7 +576,7 @@ crate::impl_javascript_parser_hook!(
   CommonJsExportsParserPlugin,
   JavascriptParserAssignMemberChain,
   assign_member_chain(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     assign_expr: &AssignExpr,
     remaining: &[Atom],
     for_name: &str
@@ -585,18 +585,18 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   CommonJsExportsParserPlugin,
   JavascriptParserCall,
-  call(parser: &mut JavascriptParser, call_expr: &CallExpr, for_name: &str) -> bool
+  call(parser: &mut JavascriptParserState, call_expr: &CallExpr, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   CommonJsExportsParserPlugin,
   JavascriptParserIdentifier,
-  identifier(parser: &mut JavascriptParser, ident: &Ident, for_name: &str) -> bool
+  identifier(parser: &mut JavascriptParserState, ident: &Ident, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   CommonJsExportsParserPlugin,
   JavascriptParserThis,
   this(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::ThisExpr,
     for_name: &str
   ) -> bool
@@ -604,13 +604,13 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   CommonJsExportsParserPlugin,
   JavascriptParserMember,
-  member(parser: &mut JavascriptParser, expr: &MemberExpr, for_name: &str) -> bool
+  member(parser: &mut JavascriptParserState, expr: &MemberExpr, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   CommonJsExportsParserPlugin,
   JavascriptParserMemberChain,
   member_chain(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &MemberExpr,
     for_name: &str,
     members: &[Atom],
@@ -622,7 +622,7 @@ crate::impl_javascript_parser_hook!(
   CommonJsExportsParserPlugin,
   JavascriptParserCallMemberChain,
   call_member_chain(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &CallExpr,
     for_name: &str,
     members: &[Atom],
@@ -635,7 +635,7 @@ crate::impl_javascript_parser_hook!(
   JavascriptParserEvaluateTypeof,
   <'a>,
   evaluate_typeof(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a UnaryExpr,
     for_name: &str
   ) -> BasicEvaluatedExpression<'a>

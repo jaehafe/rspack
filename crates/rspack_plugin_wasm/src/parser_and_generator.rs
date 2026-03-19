@@ -4,9 +4,9 @@ use rspack_cacheable::{cacheable, cacheable_dyn};
 use rspack_collections::IdentifierIndexMap;
 use rspack_core::{
   BoxDependency, BuildMetaExportsType, Dependency, DependencyId, DependencyType, ExportsArgument,
-  GenerateContext, Generator, ImportPhase, Module, ModuleArgument, ModuleDependency,
-  ModuleGraph, ModuleInitFragments, ParseContext, ParseResult, Parser, RuntimeGlobals,
-  SourceType, StaticExportsDependency, StaticExportsSpec,
+  GenerateContext, Generator, ImportPhase, Module, ModuleArgument, ModuleDependency, ModuleGraph,
+  ModuleInitFragments, ParseContext, ParseResult, Parser, RuntimeGlobals, SourceType,
+  StaticExportsDependency, StaticExportsSpec,
   rspack_sources::{BoxSource, RawStringSource, Source, SourceExt},
 };
 use rspack_error::{Diagnostic, IntoTWithDiagnosticArray, Result, TWithDiagnosticArray};

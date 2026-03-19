@@ -14,14 +14,14 @@ use super::{
   ConflictingValuesError, DefineValue,
   utils::{code_to_string, gen_const_dep},
 };
-use crate::{utils::eval::BasicEvaluatedExpression, visitors::JavascriptParser};
+use crate::{utils::eval::BasicEvaluatedExpression, visitors::JavascriptParserState};
 
 static TYPEOF_OPERATOR_REGEXP: LazyLock<Regex> =
   LazyLock::new(|| Regex::new("^typeof\\s+").expect("should init `TYPEOF_OPERATOR_REGEXP`"));
 
 type OnEvaluateIdentifier = dyn Fn(
     &DefineRecord,
-    &mut JavascriptParser,
+    &mut JavascriptParserState,
     &str, /* Ident */
     u32,  /* start */
     u32,  /* end */
@@ -31,7 +31,7 @@ type OnEvaluateIdentifier = dyn Fn(
 
 type OnEvaluateTypeof = dyn Fn(
     &DefineRecord,
-    &mut JavascriptParser,
+    &mut JavascriptParserState,
     u32, /* start */
     u32, /* end */
   ) -> Option<BasicEvaluatedExpression<'static>>
@@ -40,7 +40,7 @@ type OnEvaluateTypeof = dyn Fn(
 
 type OnExpression = dyn Fn(
     &DefineRecord,
-    &mut JavascriptParser,
+    &mut JavascriptParserState,
     Span,
     u32,  /* replace start */
     u32,  /* replace end */
@@ -49,7 +49,12 @@ type OnExpression = dyn Fn(
   + Send
   + Sync;
 
-type OnTypeof = dyn Fn(&DefineRecord, &mut JavascriptParser, u32 /* start */, u32 /* end */) -> Option<bool>
+type OnTypeof = dyn Fn(
+    &DefineRecord,
+    &mut JavascriptParserState,
+    u32, /* start */
+    u32, /* end */
+  ) -> Option<bool>
   + Send
   + Sync;
 
@@ -140,7 +145,7 @@ impl std::fmt::Debug for ObjectDefineRecord {
 
 type OnObjectEvaluateIdentifier = dyn Fn(
     &ObjectDefineRecord,
-    &mut JavascriptParser,
+    &mut JavascriptParserState,
     &str, /* Ident */
     u32,  /* start */
     u32,  /* end */
@@ -150,7 +155,7 @@ type OnObjectEvaluateIdentifier = dyn Fn(
 
 type OnObjectExpression = dyn Fn(
     &ObjectDefineRecord,
-    &mut JavascriptParser,
+    &mut JavascriptParserState,
     Span,
     u32,  /* replace start */
     u32,  /* replace end */

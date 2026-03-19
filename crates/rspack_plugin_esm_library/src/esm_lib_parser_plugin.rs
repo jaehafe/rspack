@@ -3,12 +3,12 @@ use std::sync::Arc;
 use rspack_core::DependencyType;
 use rspack_plugin_javascript::{
   JavascriptParserFinish, JavascriptParserPlugin, JavascriptParserPluginContext,
-  dependency::ESMCompatibilityDependency, visitors::JavascriptParser,
+  dependency::ESMCompatibilityDependency, visitors::JavascriptParserState,
 };
 pub struct EsmLibParserPlugin;
 
 impl EsmLibParserPlugin {
-  fn finish(&self, parser: &mut JavascriptParser) -> Option<bool> {
+  fn finish(&self, parser: &mut JavascriptParserState) -> Option<bool> {
     if parser.module_type.is_js_auto()
       && matches!(
         parser.build_meta.exports_type,
@@ -39,7 +39,7 @@ impl EsmLibParserPlugin {
 struct EsmLibParserPluginFinishTap(Arc<EsmLibParserPlugin>);
 
 impl JavascriptParserFinish for EsmLibParserPluginFinishTap {
-  fn run(&self, parser: &mut JavascriptParser) -> rspack_error::Result<Option<bool>> {
+  fn run(&self, parser: &mut JavascriptParserState) -> rspack_error::Result<Option<bool>> {
     Ok(self.0.finish(parser))
   }
 }

@@ -6,10 +6,10 @@ use swc_core::{
 };
 
 use crate::visitors::{
-  ExportAllDeclaration, ExportImport, ExportNamedDeclaration, JavascriptParser,
+  ExportAllDeclaration, ExportImport, ExportNamedDeclaration, JavascriptParserState,
 };
 
-impl JavascriptParser<'_> {
+impl JavascriptParserState<'_> {
   pub fn module_pre_walk_module_items(&mut self, statements: &Vec<ModuleItem>) {
     for statement in statements {
       self.statement_path.push(statement.span().into());

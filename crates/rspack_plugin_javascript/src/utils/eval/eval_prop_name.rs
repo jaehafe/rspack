@@ -3,12 +3,12 @@ use swc_core::{common::Spanned, ecma::ast::PropName};
 
 use crate::{
   utils::eval::{BasicEvaluatedExpression, eval_bigint, eval_number, eval_str},
-  visitors::JavascriptParser,
+  visitors::JavascriptParserState,
 };
 
 #[inline]
 pub fn eval_prop_name<'a>(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   prop_name: &'a PropName,
 ) -> BasicEvaluatedExpression<'a> {
   match prop_name {

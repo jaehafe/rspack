@@ -8,7 +8,7 @@ use rspack_util::SpanExt;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use swc_core::{
   atoms::Atom,
-  common::{Mark, Span, Spanned, SyntaxContext},
+  common::{Span, Spanned},
   ecma::ast::{
     AssignOp, ClassMember, DefaultDecl, ExportDefaultExpr, Expr, ModuleDecl, Pat, VarDeclarator,
   },
@@ -31,7 +31,7 @@ use crate::{
     is_pure_class, is_pure_class_member, is_pure_expression, is_pure_function,
   },
   visitors::{
-    ExportedVariableInfo, JavascriptParser, Statement, TagInfoData, VariableDeclaration,
+    ExportedVariableInfo, JavascriptParserState, Statement, TagInfoData, VariableDeclaration,
     scope_info::VariableInfoFlags,
   },
 };
@@ -77,9 +77,7 @@ pub(crate) enum InnerGraphMapUsage {
   True,
 }
 
-pub struct InnerGraphPlugin {
-  unresolved_context: SyntaxContext,
-}
+pub struct InnerGraphPlugin;
 
 pub static TOP_LEVEL_SYMBOL: &str = "inner graph top level symbol";
 static TOP_LEVEL_SYMBOL_ID: AtomicU32 = AtomicU32::new(1);
@@ -111,13 +109,7 @@ impl TopLevelSymbol {
 }
 
 impl InnerGraphPlugin {
-  pub fn new(unresolved_mark: Mark) -> Self {
-    Self {
-      unresolved_context: SyntaxContext::empty().apply_mark(unresolved_mark),
-    }
-  }
-
-  pub fn for_each_expression(parser: &mut JavascriptParser, for_name: &str) {
+  pub fn for_each_expression(parser: &mut JavascriptParserState, for_name: &str) {
     if !parser.inner_graph.is_enabled() || for_name != TOP_LEVEL_SYMBOL {
       return;
     }
@@ -136,7 +128,7 @@ impl InnerGraphPlugin {
     }
   }
 
-  pub fn for_each_statement(parser: &mut JavascriptParser, stmt_span: &Span) {
+  pub fn for_each_statement(parser: &mut JavascriptParserState, stmt_span: &Span) {
     if let Some(v) = parser
       .inner_graph
       .statement_with_top_level_symbol
@@ -155,7 +147,7 @@ impl InnerGraphPlugin {
     }
   }
 
-  pub fn infer_dependency_usage(parser: &mut JavascriptParser) {
+  pub fn infer_dependency_usage(parser: &mut JavascriptParserState) {
     // fun will reference it self
     if !parser.inner_graph.is_enabled() {
       return;
@@ -309,7 +301,7 @@ impl InnerGraphPlugin {
   }
 
   pub(crate) fn add_variable_usage(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     name: &Atom,
     usage: InnerGraphMapUsage,
   ) {
@@ -321,7 +313,7 @@ impl InnerGraphPlugin {
     parser.inner_graph.add_usage(symbol, usage);
   }
 
-  pub fn on_usage(parser: &mut JavascriptParser, operation: InnerGraphUsageOperation) {
+  pub fn on_usage(parser: &mut JavascriptParserState, operation: InnerGraphUsageOperation) {
     if parser.inner_graph.is_enabled()
       && let Some(symbol) = parser.inner_graph.get_top_level_symbol()
     {
@@ -338,7 +330,7 @@ impl InnerGraphPlugin {
   }
 
   pub(crate) fn tag_top_level_symbol(
-    parser: &mut crate::visitors::JavascriptParser,
+    parser: &mut crate::visitors::JavascriptParserState,
     name: &Atom,
   ) -> TopLevelSymbol {
     parser.define_variable(name.clone());
@@ -367,7 +359,7 @@ impl InnerGraphPlugin {
 impl InnerGraphPlugin {
   fn program(
     &self,
-    parser: &mut crate::visitors::JavascriptParser,
+    parser: &mut crate::visitors::JavascriptParserState,
     _ast: &swc_core::ecma::ast::Program,
   ) -> Option<bool> {
     parser.inner_graph.enable();
@@ -375,7 +367,7 @@ impl InnerGraphPlugin {
     None
   }
 
-  fn finish(&self, parser: &mut JavascriptParser) -> Option<bool> {
+  fn finish(&self, parser: &mut JavascriptParserState) -> Option<bool> {
     if !parser.inner_graph.is_enabled() {
       return None;
     }
@@ -387,7 +379,7 @@ impl InnerGraphPlugin {
 
   fn pre_statement(
     &self,
-    parser: &mut crate::visitors::JavascriptParser,
+    parser: &mut crate::visitors::JavascriptParserState,
     stmt: Statement,
   ) -> Option<bool> {
     if !parser.inner_graph.is_enabled() {
@@ -415,7 +407,7 @@ impl InnerGraphPlugin {
 
   fn block_pre_statement(
     &self,
-    parser: &mut crate::visitors::JavascriptParser,
+    parser: &mut crate::visitors::JavascriptParserState,
     stmt: Statement,
   ) -> Option<bool> {
     if !parser.inner_graph.is_enabled() || !parser.is_top_level_scope() {
@@ -426,7 +418,7 @@ impl InnerGraphPlugin {
       && is_pure_class(
         parser,
         class_decl.class(),
-        self.unresolved_context,
+        parser.unresolved_context,
         parser.comments,
       )
     {
@@ -446,7 +438,7 @@ impl InnerGraphPlugin {
 
   fn block_pre_module_declaration(
     &self,
-    parser: &mut crate::visitors::JavascriptParser,
+    parser: &mut crate::visitors::JavascriptParserState,
     export_decl: &ModuleDecl,
   ) -> Option<bool> {
     if !parser.inner_graph.is_enabled() || !parser.is_top_level_scope() {
@@ -460,7 +452,7 @@ impl InnerGraphPlugin {
         && is_pure_class(
           parser,
           &class_expr.class,
-          self.unresolved_context,
+          parser.unresolved_context,
           parser.comments,
         )
       {
@@ -473,7 +465,7 @@ impl InnerGraphPlugin {
         && is_pure_function(
           parser,
           &fn_expr.function,
-          self.unresolved_context,
+          parser.unresolved_context,
           parser.comments,
         )
       {
@@ -489,7 +481,7 @@ impl InnerGraphPlugin {
     // https://github.com/estree/estree/blob/master/es2015.md#exportdefaultdeclaration
     // but SWC using ExportDefaultExpr to represent `export default 1`
     if let ModuleDecl::ExportDefaultExpr(ExportDefaultExpr { expr, .. }) = export_decl
-      && is_pure_expression(parser, expr, self.unresolved_context, parser.comments)
+      && is_pure_expression(parser, expr, parser.unresolved_context, parser.comments)
     {
       let export_part = &**expr;
       let variable = Self::tag_top_level_symbol(parser, &DEFAULT_STAR_JS_WORD);
@@ -512,7 +504,7 @@ impl InnerGraphPlugin {
 
   fn pre_declarator(
     &self,
-    parser: &mut crate::visitors::JavascriptParser,
+    parser: &mut crate::visitors::JavascriptParserState,
     decl: &VarDeclarator,
     _stmt: VariableDeclaration<'_>,
   ) -> Option<bool> {
@@ -529,7 +521,7 @@ impl InnerGraphPlugin {
         && is_pure_class(
           parser,
           &init.as_class().expect("should be class").class,
-          self.unresolved_context,
+          parser.unresolved_context,
           parser.comments,
         )
       {
@@ -539,7 +531,7 @@ impl InnerGraphPlugin {
           .inner_graph
           .class_with_top_level_symbol
           .insert(init.span(), v);
-      } else if is_pure_expression(parser, init, self.unresolved_context, parser.comments) {
+      } else if is_pure_expression(parser, init, parser.unresolved_context, parser.comments) {
         let v = Self::tag_top_level_symbol(parser, name);
         parser
           .inner_graph
@@ -557,7 +549,7 @@ impl InnerGraphPlugin {
 
   fn statement(
     &self,
-    parser: &mut crate::visitors::JavascriptParser,
+    parser: &mut crate::visitors::JavascriptParserState,
     stmt: Statement,
   ) -> Option<bool> {
     if !parser.inner_graph.is_enabled() || !parser.is_top_level_scope() {
@@ -571,7 +563,11 @@ impl InnerGraphPlugin {
     None
   }
 
-  fn module_declaration(&self, parser: &mut JavascriptParser, stmt: &ModuleDecl) -> Option<bool> {
+  fn module_declaration(
+    &self,
+    parser: &mut JavascriptParserState,
+    stmt: &ModuleDecl,
+  ) -> Option<bool> {
     if !parser.inner_graph.is_enabled() || !parser.is_top_level_scope() {
       return None;
     }
@@ -613,7 +609,7 @@ impl InnerGraphPlugin {
 
   fn class_extends_expression(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     super_class: &Expr,
     class_decl_or_expr: crate::visitors::ClassDeclOrExpr,
   ) -> Option<bool> {
@@ -624,7 +620,7 @@ impl InnerGraphPlugin {
     let is_pure_super_class = is_pure_expression(
       parser,
       super_class,
-      self.unresolved_context,
+      parser.unresolved_context,
       parser.comments,
     );
 
@@ -649,7 +645,7 @@ impl InnerGraphPlugin {
 
   fn class_body_element(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     element: &ClassMember,
     class_decl_or_expr: crate::visitors::ClassDeclOrExpr,
   ) -> Option<bool> {
@@ -693,7 +689,7 @@ impl InnerGraphPlugin {
 
   fn class_body_value(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     element: &swc_core::ecma::ast::ClassMember,
     expr_span: Span,
     class_decl_or_expr: crate::visitors::ClassDeclOrExpr,
@@ -702,7 +698,7 @@ impl InnerGraphPlugin {
       return None;
     }
     let pure_member =
-      is_pure_class_member(parser, element, self.unresolved_context, parser.comments);
+      is_pure_class_member(parser, element, parser.unresolved_context, parser.comments);
     if let Some(v) = parser
       .inner_graph
       .class_with_top_level_symbol
@@ -726,7 +722,7 @@ impl InnerGraphPlugin {
 
   fn declarator(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     decl: &swc_core::ecma::ast::VarDeclarator,
     _stmt: VariableDeclaration<'_>,
   ) -> Option<bool> {
@@ -785,7 +781,7 @@ impl InnerGraphPlugin {
 
   fn member(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     _expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -795,7 +791,7 @@ impl InnerGraphPlugin {
 
   fn assign(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::AssignExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -810,7 +806,7 @@ impl InnerGraphPlugin {
 
   fn identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     _ident: &swc_core::ecma::ast::Ident,
     for_name: &str,
   ) -> Option<bool> {
@@ -820,7 +816,7 @@ impl InnerGraphPlugin {
 
   fn this(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     _expr: &swc_core::ecma::ast::ThisExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -832,28 +828,28 @@ impl InnerGraphPlugin {
 crate::impl_javascript_parser_hook!(
   InnerGraphPlugin,
   JavascriptParserProgram,
-  program(parser: &mut crate::visitors::JavascriptParser, ast: &swc_core::ecma::ast::Program) -> bool
+  program(parser: &mut crate::visitors::JavascriptParserState, ast: &swc_core::ecma::ast::Program) -> bool
 );
 crate::impl_javascript_parser_hook!(
   InnerGraphPlugin,
   JavascriptParserFinish,
-  finish(parser: &mut JavascriptParser) -> bool
+  finish(parser: &mut JavascriptParserState) -> bool
 );
 crate::impl_javascript_parser_hook!(
   InnerGraphPlugin,
   JavascriptParserPreStatement,
-  pre_statement(parser: &mut crate::visitors::JavascriptParser, stmt: Statement) -> bool
+  pre_statement(parser: &mut crate::visitors::JavascriptParserState, stmt: Statement) -> bool
 );
 crate::impl_javascript_parser_hook!(
   InnerGraphPlugin,
   JavascriptParserBlockPreStatement,
-  block_pre_statement(parser: &mut crate::visitors::JavascriptParser, stmt: Statement) -> bool
+  block_pre_statement(parser: &mut crate::visitors::JavascriptParserState, stmt: Statement) -> bool
 );
 crate::impl_javascript_parser_hook!(
   InnerGraphPlugin,
   JavascriptParserBlockPreModuleDeclaration,
   block_pre_module_declaration(
-    parser: &mut crate::visitors::JavascriptParser,
+    parser: &mut crate::visitors::JavascriptParserState,
     export_decl: &ModuleDecl
   ) -> bool
 );
@@ -861,7 +857,7 @@ crate::impl_javascript_parser_hook!(
   InnerGraphPlugin,
   JavascriptParserPreDeclarator,
   pre_declarator(
-    parser: &mut crate::visitors::JavascriptParser,
+    parser: &mut crate::visitors::JavascriptParserState,
     decl: &VarDeclarator,
     stmt: VariableDeclaration<'_>
   ) -> bool
@@ -869,18 +865,18 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   InnerGraphPlugin,
   JavascriptParserStatement,
-  statement(parser: &mut crate::visitors::JavascriptParser, stmt: Statement) -> bool
+  statement(parser: &mut crate::visitors::JavascriptParserState, stmt: Statement) -> bool
 );
 crate::impl_javascript_parser_hook!(
   InnerGraphPlugin,
   JavascriptParserModuleDeclaration,
-  module_declaration(parser: &mut JavascriptParser, stmt: &ModuleDecl) -> bool
+  module_declaration(parser: &mut JavascriptParserState, stmt: &ModuleDecl) -> bool
 );
 crate::impl_javascript_parser_hook!(
   InnerGraphPlugin,
   JavascriptParserClassExtendsExpression,
   class_extends_expression(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     super_class: &Expr,
     class_decl_or_expr: crate::visitors::ClassDeclOrExpr
   ) -> bool
@@ -889,7 +885,7 @@ crate::impl_javascript_parser_hook!(
   InnerGraphPlugin,
   JavascriptParserClassBodyElement,
   class_body_element(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     element: &ClassMember,
     class_decl_or_expr: crate::visitors::ClassDeclOrExpr
   ) -> bool
@@ -898,7 +894,7 @@ crate::impl_javascript_parser_hook!(
   InnerGraphPlugin,
   JavascriptParserClassBodyValue,
   class_body_value(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     element: &swc_core::ecma::ast::ClassMember,
     expr_span: Span,
     class_decl_or_expr: crate::visitors::ClassDeclOrExpr
@@ -908,7 +904,7 @@ crate::impl_javascript_parser_hook!(
   InnerGraphPlugin,
   JavascriptParserDeclarator,
   declarator(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     decl: &swc_core::ecma::ast::VarDeclarator,
     stmt: VariableDeclaration<'_>
   ) -> bool
@@ -917,7 +913,7 @@ crate::impl_javascript_parser_hook!(
   InnerGraphPlugin,
   JavascriptParserMember,
   member(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str
   ) -> bool
@@ -926,7 +922,7 @@ crate::impl_javascript_parser_hook!(
   InnerGraphPlugin,
   JavascriptParserAssign,
   assign(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::AssignExpr,
     for_name: &str
   ) -> bool
@@ -935,7 +931,7 @@ crate::impl_javascript_parser_hook!(
   InnerGraphPlugin,
   JavascriptParserIdentifier,
   identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &swc_core::ecma::ast::Ident,
     for_name: &str
   ) -> bool
@@ -944,7 +940,7 @@ crate::impl_javascript_parser_hook!(
   InnerGraphPlugin,
   JavascriptParserThis,
   this(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::ThisExpr,
     for_name: &str
   ) -> bool

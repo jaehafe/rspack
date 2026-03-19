@@ -13,7 +13,7 @@ use crate::{
   JavascriptParserPlugin, JavascriptParserPluginContext, JavascriptParserRename,
   JavascriptParserTypeof,
   utils::eval::{BasicEvaluatedExpression, evaluate_to_identifier, evaluate_to_string},
-  visitors::JavascriptParser,
+  visitors::JavascriptParserState,
 };
 
 pub struct AMDParserPlugin;
@@ -26,7 +26,7 @@ const REQUIRE_AMD: &str = "require.amd";
 impl AMDParserPlugin {
   fn call(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &CallExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -42,7 +42,7 @@ impl AMDParserPlugin {
 
   fn member(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &MemberExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -79,7 +79,7 @@ impl AMDParserPlugin {
 
   fn r#typeof(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &UnaryExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -104,7 +104,7 @@ impl AMDParserPlugin {
 
   fn evaluate_typeof<'a>(
     &self,
-    _parser: &mut JavascriptParser,
+    _parser: &mut JavascriptParserState,
     expr: &'a UnaryExpr,
     for_name: &str,
   ) -> Option<BasicEvaluatedExpression<'a>> {
@@ -129,7 +129,7 @@ impl AMDParserPlugin {
 
   fn identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &swc_core::ecma::ast::Ident,
     for_name: &str,
   ) -> Option<bool> {
@@ -145,7 +145,7 @@ impl AMDParserPlugin {
 
   fn evaluate_identifier(
     &self,
-    _parser: &mut JavascriptParser,
+    _parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32,
@@ -173,14 +173,19 @@ impl AMDParserPlugin {
     None
   }
 
-  fn can_rename(&self, _parser: &mut JavascriptParser, for_name: &str) -> Option<bool> {
+  fn can_rename(&self, _parser: &mut JavascriptParserState, for_name: &str) -> Option<bool> {
     if for_name == DEFINE {
       return Some(true);
     }
     None
   }
 
-  fn rename(&self, parser: &mut JavascriptParser, expr: &Expr, for_name: &str) -> Option<bool> {
+  fn rename(
+    &self,
+    parser: &mut JavascriptParserState,
+    expr: &Expr,
+    for_name: &str,
+  ) -> Option<bool> {
     if for_name == DEFINE {
       parser.add_presentational_dependency(Box::new(RuntimeRequirementsDependency::new(
         expr.span().into(),
@@ -195,24 +200,24 @@ impl AMDParserPlugin {
 crate::impl_javascript_parser_hook!(
   AMDParserPlugin,
   JavascriptParserCall,
-  call(parser: &mut JavascriptParser, call_expr: &CallExpr, for_name: &str) -> bool
+  call(parser: &mut JavascriptParserState, call_expr: &CallExpr, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   AMDParserPlugin,
   JavascriptParserMember,
-  member(parser: &mut JavascriptParser, expr: &MemberExpr, for_name: &str) -> bool
+  member(parser: &mut JavascriptParserState, expr: &MemberExpr, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   AMDParserPlugin,
   JavascriptParserTypeof,
-  r#typeof(parser: &mut JavascriptParser, expr: &UnaryExpr, for_name: &str) -> bool
+  r#typeof(parser: &mut JavascriptParserState, expr: &UnaryExpr, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   AMDParserPlugin,
   JavascriptParserEvaluateTypeof,
   <'a>,
   evaluate_typeof(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a UnaryExpr,
     for_name: &str
   ) -> BasicEvaluatedExpression<'a>
@@ -221,7 +226,7 @@ crate::impl_javascript_parser_hook!(
   AMDParserPlugin,
   JavascriptParserIdentifier,
   identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &swc_core::ecma::ast::Ident,
     for_name: &str
   ) -> bool
@@ -230,7 +235,7 @@ crate::impl_javascript_parser_hook!(
   AMDParserPlugin,
   JavascriptParserEvaluateIdentifier,
   evaluate_identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32
@@ -239,12 +244,12 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   AMDParserPlugin,
   JavascriptParserCanRename,
-  can_rename(parser: &mut JavascriptParser, for_name: &str) -> bool
+  can_rename(parser: &mut JavascriptParserState, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   AMDParserPlugin,
   JavascriptParserRename,
-  rename(parser: &mut JavascriptParser, expr: &Expr, for_name: &str) -> bool
+  rename(parser: &mut JavascriptParserState, expr: &Expr, for_name: &str) -> bool
 );
 
 impl JavascriptParserPlugin for AMDParserPlugin {

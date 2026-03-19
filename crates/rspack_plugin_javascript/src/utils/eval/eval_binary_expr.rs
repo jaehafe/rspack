@@ -5,7 +5,7 @@ use swc_core::{
   ecma::ast::{BinExpr, BinaryOp},
 };
 
-use crate::{utils::eval::BasicEvaluatedExpression, visitors::JavascriptParser};
+use crate::{utils::eval::BasicEvaluatedExpression, visitors::JavascriptParserState};
 
 #[inline]
 fn handle_template_string_compare<'a>(
@@ -80,7 +80,7 @@ fn handle_strict_equality_comparison<'a>(
   eql: bool,
   left: BasicEvaluatedExpression<'a>,
   expr: &'a BinExpr,
-  scanner: &mut JavascriptParser,
+  scanner: &mut JavascriptParserState,
 ) -> Option<BasicEvaluatedExpression<'a>> {
   assert!(expr.op == BinaryOp::EqEqEq || expr.op == BinaryOp::NotEqEq);
   let right = scanner.evaluate_expression(&expr.right);
@@ -125,7 +125,7 @@ fn handle_abstract_equality_comparison<'a>(
   eql: bool,
   left: BasicEvaluatedExpression<'a>,
   expr: &'a BinExpr,
-  scanner: &mut JavascriptParser,
+  scanner: &mut JavascriptParserState,
 ) -> Option<BasicEvaluatedExpression<'a>> {
   assert!(expr.op == BinaryOp::EqEq || expr.op == BinaryOp::NotEq);
   let right = scanner.evaluate_expression(&expr.right);
@@ -153,7 +153,7 @@ fn handle_abstract_equality_comparison<'a>(
 fn handle_nullish_coalescing<'a>(
   left: BasicEvaluatedExpression<'a>,
   expr: &'a BinExpr,
-  scanner: &mut JavascriptParser,
+  scanner: &mut JavascriptParserState,
 ) -> Option<BasicEvaluatedExpression<'a>> {
   let left_nullish = left.as_nullish();
   match left_nullish {
@@ -178,7 +178,7 @@ fn handle_nullish_coalescing<'a>(
 fn handle_logical_or<'a>(
   left: BasicEvaluatedExpression<'a>,
   expr: &'a BinExpr,
-  scanner: &mut JavascriptParser,
+  scanner: &mut JavascriptParserState,
 ) -> Option<BasicEvaluatedExpression<'a>> {
   let left_bool = left.as_bool();
   match left_bool {
@@ -213,7 +213,7 @@ fn handle_logical_or<'a>(
 fn handle_logical_and<'a>(
   left: BasicEvaluatedExpression<'a>,
   expr: &'a BinExpr,
-  scanner: &mut JavascriptParser,
+  scanner: &mut JavascriptParserState,
 ) -> Option<BasicEvaluatedExpression<'a>> {
   let left_bool = left.as_bool();
   match left_bool {
@@ -248,7 +248,7 @@ fn handle_logical_and<'a>(
 fn handle_add<'a>(
   left: BasicEvaluatedExpression<'a>,
   expr: &'a BinExpr,
-  scanner: &mut JavascriptParser,
+  scanner: &mut JavascriptParserState,
 ) -> Option<BasicEvaluatedExpression<'a>> {
   assert_eq!(expr.op, BinaryOp::Add);
   let right = scanner.evaluate_expression(&expr.right);
@@ -380,7 +380,7 @@ fn handle_add<'a>(
 pub fn handle_const_operation<'a>(
   left: BasicEvaluatedExpression<'a>,
   expr: &'a BinExpr,
-  scanner: &mut JavascriptParser,
+  scanner: &mut JavascriptParserState,
 ) -> Option<BasicEvaluatedExpression<'a>> {
   if !left.is_compile_time_value() {
     return None;
@@ -483,7 +483,7 @@ pub fn handle_const_operation<'a>(
 }
 
 pub fn eval_binary_expression<'a>(
-  scanner: &mut JavascriptParser,
+  scanner: &mut JavascriptParserState,
   expr: &'a BinExpr,
 ) -> Option<BasicEvaluatedExpression<'a>> {
   let mut stack = vec![expr];

@@ -21,8 +21,8 @@ use crate::{
   parser_plugin::inner_graph::state::InnerGraphUsageOperation,
   utils::object_properties::get_attributes,
   visitors::{
-    AllowedMemberTypes, AtomMembers, ExportedVariableInfo, JavascriptParser, MemberExpressionInfo,
-    TagInfoData, get_non_optional_member_chain_from_expr,
+    AllowedMemberTypes, AtomMembers, ExportedVariableInfo, JavascriptParserState,
+    MemberExpressionInfo, TagInfoData, get_non_optional_member_chain_from_expr,
     get_non_optional_member_chain_from_member, get_non_optional_part,
   },
 };
@@ -44,7 +44,7 @@ pub struct ESMSpecifierData {
 impl ESMImportDependencyParserPlugin {
   fn import(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     import_decl: &ImportDecl,
     source: &str,
   ) -> Option<bool> {
@@ -89,7 +89,7 @@ impl ESMImportDependencyParserPlugin {
 
   fn import_specifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     statement: &ImportDecl,
     source: &Atom,
     id: Option<&Atom>,
@@ -115,7 +115,7 @@ impl ESMImportDependencyParserPlugin {
     Some(true)
   }
 
-  fn binary_expression(&self, parser: &mut JavascriptParser, expr: &BinExpr) -> Option<bool> {
+  fn binary_expression(&self, parser: &mut JavascriptParserState, expr: &BinExpr) -> Option<bool> {
     if expr.op != BinaryOp::In {
       return None;
     }
@@ -176,7 +176,7 @@ impl ESMImportDependencyParserPlugin {
 
   fn can_collect_destructuring_assignment_properties(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &Expr,
   ) -> Option<bool> {
     if let MemberExpressionInfo::Expression(info) =
@@ -194,7 +194,7 @@ impl ESMImportDependencyParserPlugin {
 
   fn identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &Ident,
     for_name: &str,
   ) -> Option<bool> {
@@ -240,7 +240,7 @@ impl ESMImportDependencyParserPlugin {
 
   fn call_member_chain(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str,
     members: &[Atom],
@@ -308,7 +308,7 @@ impl ESMImportDependencyParserPlugin {
 
   fn member_chain(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     member_expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str,
     members: &[Atom],
@@ -370,13 +370,13 @@ impl ESMImportDependencyParserPlugin {
 crate::impl_javascript_parser_hook!(
   ESMImportDependencyParserPlugin,
   JavascriptParserImport,
-  import(parser: &mut JavascriptParser, import_decl: &ImportDecl, source: &str) -> bool
+  import(parser: &mut JavascriptParserState, import_decl: &ImportDecl, source: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   ESMImportDependencyParserPlugin,
   JavascriptParserImportSpecifier,
   import_specifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     statement: &ImportDecl,
     source: &Atom,
     id: Option<&Atom>,
@@ -386,23 +386,23 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   ESMImportDependencyParserPlugin,
   JavascriptParserBinaryExpression,
-  binary_expression(parser: &mut JavascriptParser, expr: &BinExpr) -> bool
+  binary_expression(parser: &mut JavascriptParserState, expr: &BinExpr) -> bool
 );
 crate::impl_javascript_parser_hook!(
   ESMImportDependencyParserPlugin,
   JavascriptParserCanCollectDestructuringAssignmentProperties,
-  can_collect_destructuring_assignment_properties(parser: &mut JavascriptParser, expr: &Expr) -> bool
+  can_collect_destructuring_assignment_properties(parser: &mut JavascriptParserState, expr: &Expr) -> bool
 );
 crate::impl_javascript_parser_hook!(
   ESMImportDependencyParserPlugin,
   JavascriptParserIdentifier,
-  identifier(parser: &mut JavascriptParser, ident: &Ident, for_name: &str) -> bool
+  identifier(parser: &mut JavascriptParserState, ident: &Ident, for_name: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   ESMImportDependencyParserPlugin,
   JavascriptParserCallMemberChain,
   call_member_chain(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     call_expr: &swc_core::ecma::ast::CallExpr,
     for_name: &str,
     members: &[Atom],
@@ -414,7 +414,7 @@ crate::impl_javascript_parser_hook!(
   ESMImportDependencyParserPlugin,
   JavascriptParserMemberChain,
   member_chain(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     member_expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str,
     members: &[Atom],

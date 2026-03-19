@@ -5,11 +5,11 @@ use swc_core::{
 };
 
 use super::BasicEvaluatedExpression;
-use crate::visitors::{CallHooksName, JavascriptParser, RootName};
+use crate::visitors::{CallHooksName, JavascriptParserState, RootName};
 
 #[inline]
 fn eval_typeof<'a>(
-  parser: &mut JavascriptParser,
+  parser: &mut JavascriptParserState,
   expr: &'a UnaryExpr,
 ) -> Option<BasicEvaluatedExpression<'a>> {
   assert!(expr.op == UnaryOp::TypeOf);
@@ -111,7 +111,7 @@ fn eval_typeof<'a>(
 
 #[inline]
 pub fn eval_unary_expression<'a>(
-  scanner: &mut JavascriptParser,
+  scanner: &mut JavascriptParserState,
   expr: &'a UnaryExpr,
 ) -> Option<BasicEvaluatedExpression<'a>> {
   match expr.op {

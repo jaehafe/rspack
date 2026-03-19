@@ -15,8 +15,8 @@ use rspack_core::{
   CssParserImport, CssParserImportContext, Dependency, DependencyId, DependencyRange,
   DependencyType, ExportsInfoArtifact, GenerateContext, Generator, GeneratorOptions,
   LocalIdentName, Module, ModuleArgument, ModuleGraph, ModuleIdentifier, ModuleInitFragments,
-  ModuleType, NormalModule, ParseContext, ParseResult, Parser, ParserData,
-  PrefetchExportsInfoMode, RuntimeGlobals, RuntimeSpec, SourceType, TemplateContext, UsageState,
+  ModuleType, NormalModule, ParseContext, ParseResult, Parser, ParserData, PrefetchExportsInfoMode,
+  RuntimeGlobals, RuntimeSpec, SourceType, TemplateContext, UsageState,
   diagnostics::map_box_diagnostics_to_module_parse_diagnostics,
   remove_bom,
   rspack_sources::{BoxSource, ConcatSource, RawStringSource, ReplaceSource, Source, SourceExt},
@@ -186,8 +186,7 @@ impl Parser for CssParser {
     let resource_data = module_match_resource.unwrap_or(resource_data);
     let resource_path = resource_data.path();
     let convention = get_css_modules_exports_convention(module_type, module_generator_options);
-    let local_ident_name =
-      get_css_modules_local_ident_name(module_type, module_generator_options);
+    let local_ident_name = get_css_modules_local_ident_name(module_type, module_generator_options);
     let cached_source_code = OnceCell::new();
     let get_source_code = || {
       let s = cached_source_code.get_or_init(|| Arc::new(source_code.to_string()));

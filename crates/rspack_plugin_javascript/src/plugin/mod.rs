@@ -42,9 +42,9 @@ use rspack_error::{Result, ToStringResultToRspackResultExt};
 use rspack_hash::{RspackHash, RspackHashDigest};
 use rspack_hook::plugin;
 use rspack_javascript_compiler::ast::Ast;
+use rspack_util::SpanExt;
 #[cfg(allocative)]
 use rspack_util::allocative;
-use rspack_util::SpanExt;
 pub use side_effects_flag_plugin::*;
 use swc_core::{
   atoms::Atom,

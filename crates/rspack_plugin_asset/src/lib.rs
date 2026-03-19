@@ -9,9 +9,9 @@ use rspack_core::{
   ChunkUkey, CodeGenerationDataAssetInfo, CodeGenerationDataFilename, CodeGenerationDataUrl,
   CodeGenerationPublicPathAutoReplace, Compilation, CompilationRenderManifest, CompilerOptions,
   DependencyType, Filename, GenerateContext, Generator, GeneratorOptions, ManifestAssetType,
-  Module, ModuleArgument, ModuleGraph, NAMESPACE_OBJECT_EXPORT, NormalModule,
-  ParseContext, Parser, ParserData, PathData, Plugin, PublicPath, RenderManifestEntry,
-  ResourceData, RuntimeGlobals, RuntimeSpec, SourceType,
+  Module, ModuleArgument, ModuleGraph, NAMESPACE_OBJECT_EXPORT, NormalModule, ParseContext, Parser,
+  ParserData, PathData, Plugin, PublicPath, RenderManifestEntry, ResourceData, RuntimeGlobals,
+  RuntimeSpec, SourceType,
   rspack_sources::{BoxSource, RawStringSource, SourceExt},
 };
 use rspack_error::{Diagnostic, IntoTWithDiagnosticArray, Result, error};
@@ -244,7 +244,8 @@ impl AssetGenerator {
     if let Some(encoded_content) = resource_data.encoded_content()
       && let Some(resource_encoding) = resource_data.encoding()
       && resource_encoding == encoding
-      && Self::decode_data_uri_content(encoding, encoded_content, source).eq(&source.buffer().to_vec())
+      && Self::decode_data_uri_content(encoding, encoded_content, source)
+        .eq(&source.buffer().to_vec())
     {
       return Ok(encoded_content.to_owned());
     }
@@ -429,7 +430,9 @@ impl Parser for AssetParser {
         source,
         presentational_dependencies: vec![],
         code_generation_dependencies: vec![],
-        parser_data: Some(Arc::new(AssetParserData { parsed_asset_config }) as BoxedParserData),
+        parser_data: Some(Arc::new(AssetParserData {
+          parsed_asset_config,
+        }) as BoxedParserData),
         side_effects_bailout: None,
       }
       .with_empty_diagnostic(),
@@ -536,8 +539,8 @@ impl Generator for AssetGenerator {
     generate_context: &mut GenerateContext,
   ) -> Result<BoxSource> {
     let compilation = generate_context.compilation;
-    let parsed_asset_config = get_parsed_asset_config(module)
-      .expect("should have parsed_asset_config in generate phase");
+    let parsed_asset_config =
+      get_parsed_asset_config(module).expect("should have parsed_asset_config in generate phase");
     let normal_module = module
       .as_normal_module()
       .expect("module should be a NormalModule in AssetGenerator");
@@ -646,16 +649,18 @@ impl Generator for AssetGenerator {
 
           asset_info.set_source_filename(source_file_name);
 
-          generate_context.data.insert(CodeGenerationDataFilename::new(
-            filename,
-            match module_generator_options
-              .and_then(|x| x.asset_public_path())
-              .unwrap_or_else(|| &compilation.options.output.public_path)
-            {
-              PublicPath::Filename(p) => PublicPath::render_filename(compilation, p).await,
-              PublicPath::Auto => AUTO_PUBLIC_PATH_PLACEHOLDER.to_string(),
-            },
-          ));
+          generate_context
+            .data
+            .insert(CodeGenerationDataFilename::new(
+              filename,
+              match module_generator_options
+                .and_then(|x| x.asset_public_path())
+                .unwrap_or_else(|| &compilation.options.output.public_path)
+              {
+                PublicPath::Filename(p) => PublicPath::render_filename(compilation, p).await,
+                PublicPath::Auto => AUTO_PUBLIC_PATH_PLACEHOLDER.to_string(),
+              },
+            ));
           generate_context
             .data
             .insert(CodeGenerationDataAssetInfo::new(asset_info));
@@ -747,16 +752,18 @@ impl Generator for AssetGenerator {
             )
             .await?;
 
-          generate_context.data.insert(CodeGenerationDataFilename::new(
-            filename,
-            match module_generator_options
-              .and_then(|x| x.asset_public_path())
-              .unwrap_or_else(|| &compilation.options.output.public_path)
-            {
-              PublicPath::Filename(p) => PublicPath::render_filename(compilation, p).await,
-              PublicPath::Auto => AUTO_PUBLIC_PATH_PLACEHOLDER.to_string(),
-            },
-          ));
+          generate_context
+            .data
+            .insert(CodeGenerationDataFilename::new(
+              filename,
+              match module_generator_options
+                .and_then(|x| x.asset_public_path())
+                .unwrap_or_else(|| &compilation.options.output.public_path)
+              {
+                PublicPath::Filename(p) => PublicPath::render_filename(compilation, p).await,
+                PublicPath::Auto => AUTO_PUBLIC_PATH_PLACEHOLDER.to_string(),
+              },
+            ));
 
           asset_info.set_source_filename(source_file_name);
           generate_context

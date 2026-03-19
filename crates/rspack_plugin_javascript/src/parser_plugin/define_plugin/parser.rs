@@ -18,7 +18,7 @@ use crate::{
   JavascriptParserTypeof,
   define_plugin::walk_data::DefineRecord,
   utils::eval::{BasicEvaluatedExpression, evaluate_to_string},
-  visitors::{AllowedMemberTypes, JavascriptParser, MemberExpressionInfo},
+  visitors::{AllowedMemberTypes, JavascriptParserState, MemberExpressionInfo},
 };
 
 pub struct DefineParserPlugin {
@@ -36,7 +36,7 @@ impl DefineParserPlugin {
     }
   }
 
-  fn add_value_dependency(&self, parser: &mut JavascriptParser, key: &str) {
+  fn add_value_dependency(&self, parser: &mut JavascriptParserState, key: &str) {
     if let Some(value) = self.walk_data.tiling_definitions.get(key) {
       let cache_key = format!("{VALUE_DEP_PREFIX}{key}");
       parser
@@ -56,7 +56,7 @@ impl DefineParserPlugin {
 }
 
 impl DefineParserPlugin {
-  fn can_rename(&self, parser: &mut JavascriptParser, str: &str) -> Option<bool> {
+  fn can_rename(&self, parser: &mut JavascriptParserState, str: &str) -> Option<bool> {
     if let Some(first_key) = self.walk_data.can_rename.get(str) {
       self.add_value_dependency(parser, str);
       if let Some(first_key) = first_key
@@ -72,7 +72,7 @@ impl DefineParserPlugin {
 
   fn evaluate_typeof<'a>(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a swc_core::ecma::ast::UnaryExpr,
     for_name: &str,
   ) -> Option<BasicEvaluatedExpression<'a>> {
@@ -101,7 +101,7 @@ impl DefineParserPlugin {
 
   fn evaluate_identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32,
@@ -128,7 +128,7 @@ impl DefineParserPlugin {
 
   fn r#typeof(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::UnaryExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -157,7 +157,7 @@ impl DefineParserPlugin {
 
   fn can_collect_destructuring_assignment_properties(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &Expr,
   ) -> Option<bool> {
     if let MemberExpressionInfo::Expression(info) =
@@ -178,7 +178,7 @@ impl DefineParserPlugin {
 
   fn member(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str,
   ) -> Option<bool> {
@@ -212,7 +212,7 @@ impl DefineParserPlugin {
 
   fn identifier(
     &self,
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &swc_core::ecma::ast::Ident,
     for_name: &str,
   ) -> Option<bool> {
@@ -248,14 +248,14 @@ impl DefineParserPlugin {
 crate::impl_javascript_parser_hook!(
   DefineParserPlugin,
   JavascriptParserCanRename,
-  can_rename(parser: &mut JavascriptParser, str: &str) -> bool
+  can_rename(parser: &mut JavascriptParserState, str: &str) -> bool
 );
 crate::impl_javascript_parser_hook!(
   DefineParserPlugin,
   JavascriptParserEvaluateTypeof,
   <'a>,
   evaluate_typeof(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &'a swc_core::ecma::ast::UnaryExpr,
     for_name: &str
   ) -> BasicEvaluatedExpression<'a>
@@ -264,7 +264,7 @@ crate::impl_javascript_parser_hook!(
   DefineParserPlugin,
   JavascriptParserEvaluateIdentifier,
   evaluate_identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     for_name: &str,
     start: u32,
     end: u32
@@ -274,7 +274,7 @@ crate::impl_javascript_parser_hook!(
   DefineParserPlugin,
   JavascriptParserTypeof,
   r#typeof(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::UnaryExpr,
     for_name: &str
   ) -> bool
@@ -282,13 +282,13 @@ crate::impl_javascript_parser_hook!(
 crate::impl_javascript_parser_hook!(
   DefineParserPlugin,
   JavascriptParserCanCollectDestructuringAssignmentProperties,
-  can_collect_destructuring_assignment_properties(parser: &mut JavascriptParser, expr: &Expr) -> bool
+  can_collect_destructuring_assignment_properties(parser: &mut JavascriptParserState, expr: &Expr) -> bool
 );
 crate::impl_javascript_parser_hook!(
   DefineParserPlugin,
   JavascriptParserMember,
   member(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     expr: &swc_core::ecma::ast::MemberExpr,
     for_name: &str
   ) -> bool
@@ -297,7 +297,7 @@ crate::impl_javascript_parser_hook!(
   DefineParserPlugin,
   JavascriptParserIdentifier,
   identifier(
-    parser: &mut JavascriptParser,
+    parser: &mut JavascriptParserState,
     ident: &swc_core::ecma::ast::Ident,
     for_name: &str
   ) -> bool
