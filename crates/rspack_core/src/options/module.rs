@@ -1,5 +1,6 @@
 use std::{
   fmt,
+  hash::{Hash, Hasher},
   ops::{Deref, DerefMut},
   sync::Arc,
 };
@@ -48,7 +49,7 @@ impl ParserOptionsMap {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, MergeFrom)]
+#[derive(Debug, Clone, MergeFrom, Hash, PartialEq, Eq)]
 pub enum ParserOptions {
   Asset(AssetParserOptions),
   Css(CssParserOptions),
@@ -90,7 +91,7 @@ impl ParserOptions {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, Copy, MergeFrom)]
+#[derive(Debug, Clone, Copy, MergeFrom, PartialEq, Eq, Hash)]
 pub enum DynamicImportMode {
   Lazy,
   Weak,
@@ -143,7 +144,7 @@ impl fmt::Display for DynamicImportFetchPriority {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, Copy, MergeFrom)]
+#[derive(Debug, Clone, Copy, MergeFrom, PartialEq, Eq, Hash)]
 pub enum JavascriptParserUrl {
   Enable,
   Disable,
@@ -163,7 +164,7 @@ impl From<&str> for JavascriptParserUrl {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, Copy, MergeFrom)]
+#[derive(Debug, Clone, Copy, MergeFrom, PartialEq, Eq, Hash)]
 pub enum JavascriptParserOrder {
   Disable,
   Order(i32),
@@ -195,7 +196,7 @@ impl From<&str> for JavascriptParserOrder {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, Copy, MergeFrom, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, MergeFrom, PartialEq, Eq, Hash)]
 pub enum JavascriptParserCommonjsExportsOption {
   Enable,
   Disable,
@@ -209,13 +210,13 @@ impl From<bool> for JavascriptParserCommonjsExportsOption {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, MergeFrom)]
+#[derive(Debug, Clone, MergeFrom, PartialEq, Eq, Hash)]
 pub struct JavascriptParserCommonjsOptions {
   pub exports: JavascriptParserCommonjsExportsOption,
 }
 
 #[cacheable]
-#[derive(Debug, Clone, Copy, MergeFrom)]
+#[derive(Debug, Clone, Copy, MergeFrom, PartialEq, Eq, Hash)]
 pub enum ExportPresenceMode {
   None,
   Warn,
@@ -246,7 +247,7 @@ impl ExportPresenceMode {
 }
 
 #[cacheable]
-#[derive(Debug, Default, Clone, Copy, MergeFrom)]
+#[derive(Debug, Default, Clone, Copy, MergeFrom, PartialEq, Eq, Hash)]
 pub enum TypeReexportPresenceMode {
   #[default]
   NoTolerant,
@@ -265,7 +266,7 @@ impl From<&str> for TypeReexportPresenceMode {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, Copy, MergeFrom)]
+#[derive(Debug, Clone, Copy, MergeFrom, PartialEq, Eq, Hash)]
 pub enum OverrideStrict {
   Strict,
   NoneStrict,
@@ -282,7 +283,7 @@ impl From<&str> for OverrideStrict {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, Copy, MergeFrom)]
+#[derive(Debug, Clone, Copy, MergeFrom, PartialEq, Eq, Hash)]
 pub enum ImportMeta {
   PreserveUnknown,
   Enabled,
@@ -300,7 +301,7 @@ impl From<&str> for ImportMeta {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, MergeFrom, Default)]
+#[derive(Debug, Clone, MergeFrom, Default, PartialEq, Eq, Hash)]
 pub struct JavascriptParserOptions {
   pub dynamic_import_mode: Option<DynamicImportMode>,
   pub dynamic_import_preload: Option<JavascriptParserOrder>,
@@ -331,13 +332,13 @@ pub struct JavascriptParserOptions {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, MergeFrom)]
+#[derive(Debug, Clone, MergeFrom, PartialEq, Eq, Hash)]
 pub struct AssetParserOptions {
   pub data_url_condition: Option<AssetParserDataUrl>,
 }
 
 #[cacheable]
-#[derive(Debug, Clone, MergeFrom)]
+#[derive(Debug, Clone, MergeFrom, PartialEq, Eq, Hash)]
 pub enum AssetParserDataUrl {
   Options(AssetParserDataUrlOptions),
   // TODO: Function
@@ -347,6 +348,20 @@ pub enum AssetParserDataUrl {
 #[derive(Debug, Clone, MergeFrom)]
 pub struct AssetParserDataUrlOptions {
   pub max_size: Option<f64>,
+}
+
+impl PartialEq for AssetParserDataUrlOptions {
+  fn eq(&self, other: &Self) -> bool {
+    self.max_size.map(f64::to_bits) == other.max_size.map(f64::to_bits)
+  }
+}
+
+impl Eq for AssetParserDataUrlOptions {}
+
+impl Hash for AssetParserDataUrlOptions {
+  fn hash<H: Hasher>(&self, state: &mut H) {
+    self.max_size.map(f64::to_bits).hash(state);
+  }
 }
 
 /// Context passed to the CSS parser import filter function
@@ -397,8 +412,30 @@ impl MergeFrom for CssParserImport {
   }
 }
 
+impl PartialEq for CssParserImport {
+  fn eq(&self, other: &Self) -> bool {
+    match (self, other) {
+      (Self::Bool(a), Self::Bool(b)) => a == b,
+      (Self::Func(a), Self::Func(b)) => Arc::ptr_eq(a, b),
+      _ => false,
+    }
+  }
+}
+
+impl Eq for CssParserImport {}
+
+impl Hash for CssParserImport {
+  fn hash<H: Hasher>(&self, state: &mut H) {
+    std::mem::discriminant(self).hash(state);
+    match self {
+      Self::Bool(value) => value.hash(state),
+      Self::Func(func) => Arc::as_ptr(func).hash(state),
+    }
+  }
+}
+
 #[cacheable]
-#[derive(Debug, Clone, MergeFrom)]
+#[derive(Debug, Clone, MergeFrom, PartialEq, Eq, Hash)]
 pub struct CssParserOptions {
   pub named_exports: Option<bool>,
   pub url: Option<bool>,
@@ -406,7 +443,7 @@ pub struct CssParserOptions {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, MergeFrom)]
+#[derive(Debug, Clone, MergeFrom, PartialEq, Eq, Hash)]
 pub struct CssAutoParserOptions {
   pub named_exports: Option<bool>,
   pub url: Option<bool>,
@@ -424,7 +461,7 @@ impl From<CssParserOptions> for CssAutoParserOptions {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, MergeFrom)]
+#[derive(Debug, Clone, MergeFrom, PartialEq, Eq, Hash)]
 pub struct CssModuleParserOptions {
   pub named_exports: Option<bool>,
   pub url: Option<bool>,
@@ -473,8 +510,29 @@ impl MergeFrom for ParseOption {
   }
 }
 
+impl PartialEq for ParseOption {
+  fn eq(&self, other: &Self) -> bool {
+    match (self, other) {
+      (Self::None, Self::None) => true,
+      (Self::Func(a), Self::Func(b)) => Arc::ptr_eq(a, b),
+      _ => false,
+    }
+  }
+}
+
+impl Eq for ParseOption {}
+
+impl Hash for ParseOption {
+  fn hash<H: Hasher>(&self, state: &mut H) {
+    std::mem::discriminant(self).hash(state);
+    if let Self::Func(func) = self {
+      Arc::as_ptr(func).hash(state);
+    }
+  }
+}
+
 #[cacheable]
-#[derive(Debug, Clone, MergeFrom)]
+#[derive(Debug, Clone, MergeFrom, PartialEq, Eq, Hash)]
 pub struct JsonParserOptions {
   pub exports_depth: Option<u32>,
   pub parse: ParseOption,
@@ -510,7 +568,7 @@ impl GeneratorOptionsMap {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, MergeFrom)]
+#[derive(Debug, Clone, MergeFrom, Hash, PartialEq, Eq)]
 pub enum GeneratorOptions {
   Asset(AssetGeneratorOptions),
   AssetInline(AssetInlineGeneratorOptions),
@@ -573,7 +631,7 @@ impl GeneratorOptions {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, MergeFrom)]
+#[derive(Debug, Clone, MergeFrom, PartialEq, Eq, Hash)]
 pub struct AssetInlineGeneratorOptions {
   pub data_url: Option<AssetGeneratorDataUrl>,
   pub binary: Option<bool>,
@@ -589,7 +647,7 @@ impl From<AssetGeneratorOptions> for AssetInlineGeneratorOptions {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, Copy, MergeFrom)]
+#[derive(Debug, Clone, Copy, MergeFrom, PartialEq, Eq, Hash)]
 struct AssetGeneratorImportModeFlags(u8);
 bitflags! {
   impl AssetGeneratorImportModeFlags: u8 {
@@ -599,7 +657,7 @@ bitflags! {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, Copy, MergeFrom)]
+#[derive(Debug, Clone, Copy, MergeFrom, PartialEq, Eq, Hash)]
 pub struct AssetGeneratorImportMode(AssetGeneratorImportModeFlags);
 
 impl AssetGeneratorImportMode {
@@ -628,7 +686,7 @@ impl Default for AssetGeneratorImportMode {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, MergeFrom)]
+#[derive(Debug, Clone, MergeFrom, PartialEq, Eq, Hash)]
 pub struct AssetResourceGeneratorOptions {
   pub emit: Option<bool>,
   pub filename: Option<Filename>,
@@ -652,7 +710,7 @@ impl From<AssetGeneratorOptions> for AssetResourceGeneratorOptions {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, MergeFrom)]
+#[derive(Debug, Clone, MergeFrom, PartialEq, Eq, Hash)]
 pub struct AssetGeneratorOptions {
   pub emit: Option<bool>,
   pub filename: Option<Filename>,
@@ -703,15 +761,37 @@ impl MergeFrom for AssetGeneratorDataUrl {
   }
 }
 
+impl PartialEq for AssetGeneratorDataUrl {
+  fn eq(&self, other: &Self) -> bool {
+    match (self, other) {
+      (Self::Options(a), Self::Options(b)) => a == b,
+      (Self::Func(a), Self::Func(b)) => Arc::ptr_eq(a, b),
+      _ => false,
+    }
+  }
+}
+
+impl Eq for AssetGeneratorDataUrl {}
+
+impl Hash for AssetGeneratorDataUrl {
+  fn hash<H: Hasher>(&self, state: &mut H) {
+    std::mem::discriminant(self).hash(state);
+    match self {
+      Self::Options(options) => options.hash(state),
+      Self::Func(func) => Arc::as_ptr(func).hash(state),
+    }
+  }
+}
+
 #[cacheable]
-#[derive(Debug, Clone, MergeFrom, Hash)]
+#[derive(Debug, Clone, MergeFrom, Hash, PartialEq, Eq)]
 pub struct AssetGeneratorDataUrlOptions {
   pub encoding: Option<DataUrlEncoding>,
   pub mimetype: Option<String>,
 }
 
 #[cacheable]
-#[derive(Debug, Clone, MergeFrom, Hash)]
+#[derive(Debug, Clone, MergeFrom, Hash, PartialEq, Eq)]
 pub enum DataUrlEncoding {
   None,
   Base64,
@@ -737,14 +817,14 @@ impl From<String> for DataUrlEncoding {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, MergeFrom)]
+#[derive(Debug, Clone, MergeFrom, PartialEq, Eq, Hash)]
 pub struct CssGeneratorOptions {
   pub exports_only: Option<bool>,
   pub es_module: Option<bool>,
 }
 
 #[cacheable]
-#[derive(Default, Debug, Clone, MergeFrom)]
+#[derive(Default, Debug, Clone, MergeFrom, PartialEq, Eq, Hash)]
 pub struct CssAutoGeneratorOptions {
   pub exports_convention: Option<CssExportsConvention>,
   pub exports_only: Option<bool>,
@@ -763,7 +843,7 @@ impl From<CssGeneratorOptions> for CssAutoGeneratorOptions {
 }
 
 #[cacheable]
-#[derive(Default, Debug, Clone, MergeFrom)]
+#[derive(Default, Debug, Clone, MergeFrom, PartialEq, Eq, Hash)]
 pub struct CssModuleGeneratorOptions {
   pub exports_convention: Option<CssExportsConvention>,
   pub exports_only: Option<bool>,
@@ -782,13 +862,13 @@ impl From<CssGeneratorOptions> for CssModuleGeneratorOptions {
 }
 
 #[cacheable]
-#[derive(Default, Debug, Clone, MergeFrom)]
+#[derive(Default, Debug, Clone, MergeFrom, PartialEq, Eq, Hash)]
 pub struct JsonGeneratorOptions {
   pub json_parse: Option<bool>,
 }
 
 #[cacheable]
-#[derive(Debug, Clone, MergeFrom)]
+#[derive(Debug, Clone, MergeFrom, PartialEq, Eq, Hash)]
 pub struct LocalIdentName {
   pub template: Filename,
 }
@@ -810,7 +890,7 @@ impl From<&str> for LocalIdentName {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ExportsConventionFlags(u8);
 bitflags! {
   impl ExportsConventionFlags: u8 {
@@ -827,7 +907,7 @@ impl MergeFrom for ExportsConventionFlags {
 }
 
 #[cacheable]
-#[derive(Debug, Clone, Copy, MergeFrom)]
+#[derive(Debug, Clone, Copy, MergeFrom, PartialEq, Eq, Hash)]
 pub struct CssExportsConvention(ExportsConventionFlags);
 
 impl CssExportsConvention {
