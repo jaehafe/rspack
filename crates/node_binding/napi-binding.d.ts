@@ -2471,7 +2471,6 @@ jsx?: boolean
  * @experimental
  */
 importMetaResolve?: boolean
-deferImport?: boolean
 sideEffectsFree?: Array<string>
 }
 
