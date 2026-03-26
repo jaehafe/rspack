@@ -56,216 +56,23 @@ If you need to analyze bundle outputs, it is recommended to use [Rsdoctor](/guid
 
 ## Experimental configuration changes
 
-### Remove experiments.css
-
-experiments.css has been removed. CSS processing capability is now available by default, but you still need to configure the corresponding `type` in `module.rules` to enable it:
-
-```js title="rspack.config.mjs"
-export default {
-  module: {
-    rules: [
-      {
-        test: /\.css$/,
-        type: 'css/auto', // Auto-detect CSS Modules
-      },
-    ],
-  },
-};
-```
-
-Available `type` options:
-
-- **`css`**: Process CSS as plain CSS, without CSS Modules
-- **`css/module`**: Force enable CSS Modules
-- **`css/auto`**: Auto-detect, enable CSS Modules for `.module.css` files, and process plain `.css` files as regular CSS
-
-> For more details, refer to [CSS](/guide/tech/css)
-
-### experiments.asyncWebAssembly enabled by default
-
-The default value of [experiments.asyncWebAssembly](/config/experiments#experimentsasyncwebassembly) has changed from `false` to `true`. Files with the `.wasm` extension will now be handled using the built-in `webassembly/async` rule.
-
-If you don't need this feature, you can explicitly disable it:
-
-```js title="rspack.config.mjs"
-export default {
-  experiments: {
-    asyncWebAssembly: false,
-  },
-};
-```
-
-### Moved experiments.cache
-
-`experiments.cache` has been moved to the top-level [cache](/config/cache):
-
-```diff title="rspack.config.mjs"
-export default {
--  experiments: {
--    cache: {
--      type: 'filesystem',
--      buildDependencies: {
--        config: [__filename],
--      },
--    },
--  },
-+  cache: {
-+    type: 'filesystem',
-+    buildDependencies: {
-+      config: [__filename],
-+    },
-+  },
-};
-```
-
-### Removed experiments.rspackFuture
-
-`experiments.rspackFuture` has been removed. The `bundlerInfo` option has been moved to [output.bundlerInfo](/config/output#outputbundlerinfo):
-
-```diff title="rspack.config.mjs"
-export default {
--  experiments: {
--    rspackFuture: {
--      bundlerInfo: {
--        version: '1.0.0',
--      },
--    },
--  },
-+  output: {
-+    bundlerInfo: {
-+      version: '1.0.0',
-+    },
-+  },
-};
-```
-
-### Moved experiments.incremental
-
-`experiments.incremental` has been moved to the top-level [incremental](/config/incremental):
-
-```diff title="rspack.config.mjs"
-export default {
--  experiments: {
--    incremental: {
--      make: true,
--      emitAssets: true,
--    },
--  },
-+  incremental: {
-+    make: true,
-+    emitAssets: true,
-+  },
-};
-```
-
-### Removed experiments.layers
-
-`experiments.layers` has been removed. The Layer feature is now stable and enabled by default, but you still need to configure `layer` in `module.rules` to enable it:
-
-```js title="rspack.config.mjs"
-export default {
-  module: {
-    rules: [
-      {
-        test: /\.css$/,
-        type: 'css/auto',
-        layer: 'styles', // Place CSS modules in 'styles' layer
-      },
-      {
-        test: /\.js$/,
-        layer: 'app', // Place JS modules in 'app' layer
-      },
-    ],
-  },
-};
-```
-
-### Removed experiments.topLevelAwait
-
-`experiments.topLevelAwait` has been removed. The top-level await feature is now stable and enabled by default. Using top-level await in ESM modules will now work automatically:
-
-```js title="get-config.mjs"
-// Use await directly at module top level
-const response = await fetch('https://api.example.com/config');
-const config = await response.json();
-
-export default config;
-```
-
-### Removed experiments.lazyCompilation
-
-`experiments.lazyCompilation` has been moved to the top-level [lazyCompilation](/config/lazy-compilation):
-
-```diff title="rspack.config.mjs"
-export default {
--  experiments: {
--    lazyCompilation: true,
--  },
-+  lazyCompilation: true,
-};
-```
-
-`experiments.lazyCompilationMiddleware` has been moved to the top-level [lazyCompilationMiddleware](/guide/features/lazy-compilation#integrating-with-custom-server):
-
-```diff title="rspack.config.mjs"
-- const middleware = rspack.experiments.lazyCompilationMiddleware(compiler);
-+ const middleware = rspack.lazyCompilationMiddleware(compiler);
-
-const server = new DevServer(
-  {
-    port: 3000,
-    setupMiddlewares(other) {
-      return [middleware, ...other];
-    },
-  },
-  compiler,
-);
-```
-
-### Removed experiments.lazyBarrel
-
-`experiments.lazyBarrel` has been removed. The [Lazy barrel](/guide/optimization/lazy-barrel) optimization will be enabled by default.
-
-### Removed experiments.typeReexportsPresence
-
-`experiments.typeReexportsPresence` has been removed. You can use [module.parser.javascript.typeReexportsPresence](/config/module#moduleparserjavascripttypereexportspresence) directly to control the behavior when re-exporting types.
-
-### Removed experiments.inlineConst
-
-`experiments.inlineConst` has been removed. You can use [optimization.inlineExports](/config/optimization#optimizationinlineexports) to control constant inlining optimization.
-
-### Removed experiments.inlineEnum
-
-`experiments.inlineEnum` has been removed. You can use [optimization.inlineExports](/config/optimization#optimizationinlineexports) and builtin:swc-loader's [collectTypeScriptInfo.exportedEnum](/guide/features/builtin-swc-loader#collecttypescriptinfoexportedenum) to control enum inlining optimization.
-
-### Removed experiments.outputModule
-
-`experiments.outputModule` has been removed. You can use [output.module](/config/output#outputmodule) directly to output ESM artifacts.
-
-### Removed experiments.parallelLoader
-
-`experiments.parallelLoader` has been removed. You can enable loader parallelization via [module.rules.use.parallel](/config/module-rules#rulesuseparallel):
-
-```diff title="rspack.config.mjs"
-export default {
--  experiments: {
--    parallelLoader: true,
--  },
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        use: [
-          {
-            loader: './my-loader.js',
-            parallel: true, // Enable parallel loader
-          },
-        ],
-      },
-    ],
-  },
-};
-```
+- `experiments.css`: removed; CSS is enabled by default, and CSS handling now comes from `module.rules[].type`.
+- [experiments.asyncWebAssembly](/config/experiments#experimentsasyncwebassembly): now defaults to `true`, so `.wasm` files use the built-in `webassembly/async` rule unless you disable it.
+- `experiments.cache`: moved to the top-level [cache](/config/cache).
+- `experiments.rspackFuture`: removed; configure `bundlerInfo` with [output.bundlerInfo](/config/output#outputbundlerinfo).
+- `experiments.incremental`: moved to the top-level [incremental](/config/incremental).
+- `experiments.layers`: removed; layers are stable and enabled by default, and `module.rules[].layer` now enables them per rule.
+- `experiments.topLevelAwait`: removed; top-level await is stable and enabled by default in ESM.
+- `experiments.lazyCompilation`: moved to top-level [lazyCompilation](/config/lazy-compilation), and `rspack.experiments.lazyCompilationMiddleware` moved to [rspack.lazyCompilationMiddleware](/guide/features/lazy-compilation#integrating-with-custom-server).
+- `experiments.lazyBarrel`: removed; [Lazy barrel](/guide/optimization/lazy-barrel) is enabled by default.
+- `experiments.typeReexportsPresence`: removed; use [module.parser.javascript.typeReexportsPresence](/config/module#moduleparserjavascripttypereexportspresence).
+- `experiments.inlineConst`: removed; use [optimization.inlineExports](/config/optimization#optimizationinlineexports).
+- `experiments.inlineEnum`: removed; use [optimization.inlineExports](/config/optimization#optimizationinlineexports) plus `builtin:swc-loader` [collectTypeScriptInfo.exportedEnum](/guide/features/builtin-swc-loader#collecttypescriptinfoexportedenum).
+- `experiments.outputModule`: removed; use [output.module](/config/output#outputmodule).
+- `experiments.parallelLoader`: removed; enable loader parallelization with `module.rules[].use.parallel` in [module rules](/config/module-rules#rulesuseparallel).
+- `builtin:swc-loader` `rspackExperiments.collectTypeScriptInfo`: removed; use [collectTypeScriptInfo](/guide/features/builtin-swc-loader#collecttypescriptinfo).
+- `builtin:swc-loader` `rspackExperiments.import`: moved to top-level [transformImport](/guide/features/builtin-swc-loader#transformimport); the old key still works as a deprecated alias in 2.0.
+- `rspack.experiments.SubresourceIntegrityPlugin`: moved to top-level [SubresourceIntegrityPlugin](/plugins/rspack/subresource-integrity-plugin).
 
 ## Module compilation changes
 
@@ -332,61 +139,6 @@ export default {
               },
             },
           },
-        },
-      },
-    ],
-  },
-};
-```
-
-### Removed builtin:swc-loader's rspackExperiments.collectTypeScriptInfo
-
-The `rspackExperiments.collectTypeScriptInfo` option of `builtin:swc-loader` has been removed. You can use [collectTypeScriptInfo](/guide/features/builtin-swc-loader#collecttypescriptinfo) to control TypeScript information collection.
-
-```js title="rspack.config.mjs"
-export default {
-  module: {
-    rules: [
-      {
-        test: /\.ts$/,
-        loader: 'builtin:swc-loader',
-        options: {
-          collectTypeScriptInfo: {
-            typeExports: true,
-          },
-        },
-      },
-    ],
-  },
-};
-```
-
-### Moved builtin:swc-loader's rspackExperiments.import
-
-The `rspackExperiments.import` option of `builtin:swc-loader` has been moved to the top-level [transformImport](/guide/features/builtin-swc-loader#transformimport) option. `rspackExperiments.import` is still supported as a deprecated alias in Rspack 2.0, but you should migrate to `transformImport` to avoid future breakage.
-
-```diff title="rspack.config.mjs"
-export default {
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        loader: 'builtin:swc-loader',
-        options: {
--         rspackExperiments: {
--           import: [
--             {
--               libraryName: 'antd',
--               style: true,
--             },
--           ],
--         },
-+         transformImport: [
-+           {
-+             libraryName: 'antd',
-+             style: true,
-+           },
-+         ],
         },
       },
     ],
@@ -554,24 +306,6 @@ export default {
 +      type: 'modern-module',
 +    },
 +  },
-};
-```
-
-### Removed experiments.SubResourceIntegrityPlugin
-
-`experiments.SubResourceIntegrityPlugin` has been moved to the top-level [SubresourceIntegrityPlugin](/plugins/rspack/subresource-integrity-plugin):
-
-```diff title="rspack.config.mjs"
-import rspack from '@rspack/core';
-
-export default {
-  output: {
-    crossOriginLoading: 'anonymous',
-  },
-  plugins: [
--    new rspack.experiments.SubresourceIntegrityPlugin(),
-+    new rspack.SubresourceIntegrityPlugin(),
-  ],
 };
 ```
 
