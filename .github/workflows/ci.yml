@@ -126,6 +126,19 @@ jobs:
       test-runner: ${{ vars.LINUX_SELF_HOSTED_RUNNER_LABELS || '"ubuntu-22.04"' }}
       test: true
 
+  test-wasm-browser:
+    name: Test WASM Browser
+    needs: [check-changed]
+    if: ${{ needs.check-changed.outputs.code_changed == 'true' }}
+    uses: ./.github/workflows/reusable-build.yml
+    with:
+      target: wasm32-wasip1-threads
+      profile: 'ci'
+      runner: ${{ vars.LINUX_SELF_HOSTED_RUNNER_LABELS || '"ubuntu-22.04"' }}
+      test-runner: ${{ vars.LINUX_SELF_HOSTED_RUNNER_LABELS || '"ubuntu-22.04"' }}
+      test: true
+      browser: true
+
   check-codspeed:
     name: Check Bench Result
     needs: [bench-binding, bench-rust]
@@ -186,6 +199,7 @@ jobs:
         test-windows,
         test-mac,
         test-wasm,
+        test-wasm-browser,
         check-changed,
         size-limit,
         check-cache,
