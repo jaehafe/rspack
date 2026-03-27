@@ -6,20 +6,20 @@ import { PackageManagerTabs } from '@theme';
 
 # Upgrading from v1 to v2
 
-This document lists all breaking changes from Rspack 1.x to 2.0. Use it as a migration reference.
+This page lists the breaking changes from Rspack 1.x to 2.0.
 
 - For more details, see [Breaking changes in Rspack 2.0](https://github.com/web-infra-dev/rspack/discussions/9270)
 - For Rsbuild users, see [Rsbuild - Upgrading from v1 to v2](https://v2.rsbuild.rs/guide/upgrade/v1-to-v2)
 
 ## Using Agent Skills
 
-If you are using a Coding Agent that supports Skills, install the [rspack-v2-upgrade](https://github.com/rstackjs/agent-skills#rspack-v2-upgrade) skill to help with the upgrade process from v1 to v2.
+If your Coding Agent supports Skills, install [rspack-v2-upgrade](https://github.com/rstackjs/agent-skills#rspack-v2-upgrade) to help with the migration.
 
 ```bash
 npx skills add rstackjs/agent-skills --skill rspack-v2-upgrade
 ```
 
-After installation, let the Coding Agent guide you through the upgrade.
+Then let the agent guide the upgrade.
 
 ## Upgrade Node.js
 
@@ -27,40 +27,36 @@ Rspack 2.0 requires a minimum Node.js version of **20.19+** or **22.12+**, and N
 
 ## Pure ESM packages
 
-`@rspack/core`, `@rspack/cli` and `@rspack/dev-server` are now published as **pure ESM** packages, with CommonJS builds removed.
+`@rspack/core`, `@rspack/cli`, and `@rspack/dev-server` are now **pure ESM** packages. CommonJS builds have been removed.
 
-In Node.js 20 and later, the runtime natively supports loading ESM modules via [require(esm)](https://nodejs.org/api/modules.html#loading-ecmascript-modules-using-require). As a result, for most projects that use Rspack through its JavaScript API, this change should have no practical impact and does not require any code modifications.
+Node.js 20+ supports [require(esm)](https://nodejs.org/api/modules.html#loading-ecmascript-modules-using-require), so most projects using the JavaScript API do not need code changes.
 
-> This does not affect Rspack's ability to build CommonJS output. All related build behavior and configuration options remain unchanged.
+> This only affects package consumption. Rspack can still build CommonJS output.
 
 ## Dev server
 
-[@rspack/dev-server](https://npmjs.com/package/@rspack/dev-server) 2.0 has been released, with the following changes:
+[@rspack/dev-server](https://npmjs.com/package/@rspack/dev-server) 2.0 includes these changes:
 
-- `@rspack/cli` no longer depends on `@rspack/dev-server` by default, since some workflows do not require a dev server. When using the `rspack dev` or `rspack serve` commands, install `@rspack/dev-server` manually:
+- `@rspack/cli` no longer depends on `@rspack/dev-server` by default. Install it manually when using `rspack dev` or `rspack serve`:
 
 <PackageManagerTabs command="add @rspack/dev-server@beta -D" />
 
-- Some [devServer](/config/dev-server) options have changed, including `devServer.proxy` and `devServer.watchFiles`. See the [upgrade guide](https://github.com/rstackjs/rspack-dev-server/blob/main/docs/migrate-v1-to-v2.md) for more details.
+- Some [devServer](/config/dev-server) options changed, including `devServer.proxy` and `devServer.watchFiles`. See the [upgrade guide](https://github.com/rstackjs/rspack-dev-server/blob/main/docs/migrate-v1-to-v2.md).
 
-`@rspack/dev-server` dependencies are now more streamlined and modernized:
+It also:
 
 - It introduces the new [@rspack/dev-middleware](https://github.com/rstackjs/rspack-dev-middleware) package to replace `webpack-dev-middleware`.
 - It uses [connect-next](https://github.com/rstackjs/connect-next) instead of Express v4 as the default middleware framework.
 
 ## Bundle analysis
 
-The built-in `webpack-bundler-analyzer` has been removed from `@rspack/cli`, and the `--analyze` flag is no longer available.
-
-If you need to analyze bundle outputs, it is recommended to use [Rsdoctor](/guide/optimization/use-rsdoctor), which provides more powerful analysis capabilities.
+`@rspack/cli` no longer bundles `webpack-bundler-analyzer`, so `--analyze` has been removed. Use [Rsdoctor](/guide/optimization/use-rsdoctor) instead.
 
 ## Module compilation changes
 
 ### Changed default value of module.parser.javascript.exportsPresence
 
-The default value of [module.parser.javascript.exportsPresence](/config/module#moduleparserjavascriptexportspresence) has been changed from `warn` to `error`. When detecting non-existent exports, an error will now be thrown directly instead of just a warning.
-
-If you want to restore the old behavior, you can explicitly set it to `auto`:
+The default value of [module.parser.javascript.exportsPresence](/config/module#moduleparserjavascriptexportspresence) is now `error` instead of `warn`. Set it to `auto` to keep the old behavior:
 
 ```js title="rspack.config.mjs"
 export default {
@@ -80,9 +76,7 @@ export default {
 
 ### Changed default value of module.parser.javascript.requireAlias
 
-The default value of [module.parser.javascript.requireAlias](/config/module#moduleparserjavascriptrequirealias) has been changed from `true` to `false`. When detecting `require` being assigned to a variable or passed as a parameter, it will not be parsed and transformed.
-
-If your code uses require renaming and loads downstream modules, and you want those modules to be bundled into the output, you can explicitly enable it:
+The default value of [module.parser.javascript.requireAlias](/config/module#moduleparserjavascriptrequirealias) is now `false` instead of `true`. If you still rely on renamed `require` calls being parsed and bundled, enable it explicitly:
 
 ```js title="rspack.config.mjs"
 export default {
@@ -98,7 +92,7 @@ export default {
 
 ### Disabled builtin:swc-loader reading .swcrc
 
-In Rspack 2.0, `builtin:swc-loader` no longer supports reading `.swcrc` files. You need to migrate your SWC configuration to the loader options in `rspack.config.js`:
+`builtin:swc-loader` no longer reads `.swcrc`. Move your SWC config into loader options:
 
 ```js title="rspack.config.mjs"
 export default {
@@ -128,9 +122,7 @@ export default {
 
 ### Derive loader and plugin targets from target
 
-In Rspack 2.0, the `targets` configuration for `builtin:swc-loader`, `builtin:lightningcss-loader`, and `rspack.LightningCssMinimizerRspackPlugin` now defaults to being derived from the [target](/config/target) configuration.
-
-If you need to explicitly control the `targets` configuration, you can configure it in the loader or plugin options:
+The `targets` configuration for `builtin:swc-loader`, `builtin:lightningcss-loader`, and `rspack.LightningCssMinimizerRspackPlugin` now defaults to [target](/config/target). Override it in loader or plugin options if needed:
 
 ```js title="rspack.config.mjs"
 export default {
@@ -171,9 +163,7 @@ export default {
 
 ### Changed default value of output.chunkLoadingGlobal
 
-The default value of [output.chunkLoadingGlobal](/config/output#outputchunkloadingglobal) has been changed from `webpackChunk${output.uniqueName}` to `rspackChunk${output.uniqueName}`.
-
-If your application depends on a specific global variable name, you can explicitly configure it:
+The default value of [output.chunkLoadingGlobal](/config/output#outputchunkloadingglobal) changed from `webpackChunk${output.uniqueName}` to `rspackChunk${output.uniqueName}`. Set it explicitly if you need the old name:
 
 ```js title="rspack.config.mjs"
 export default {
@@ -185,9 +175,7 @@ export default {
 
 ### Changed default value of output.hotUpdateGlobal
 
-The default value of [output.hotUpdateGlobal](/config/output#outputhotupdateglobal) has been changed from `webpackHotUpdate${output.uniqueName}` to `rspackHotUpdate${output.uniqueName}`.
-
-If your application depends on a specific global variable name, you can explicitly configure it:
+The default value of [output.hotUpdateGlobal](/config/output#outputhotupdateglobal) changed from `webpackHotUpdate${output.uniqueName}` to `rspackHotUpdate${output.uniqueName}`. Set it explicitly if you need the old name:
 
 ```js title="rspack.config.mjs"
 export default {
@@ -199,11 +187,7 @@ export default {
 
 ### Changed default fallback value of output.trustedTypes.policyName
 
-The default fallback value of [output.trustedTypes.policyName](/config/output#outputtrustedtypes) has been changed from `'webpack'` to `'rspack'`.
-
-The default value of `policyName` is `output.uniqueName`, and the fallback value is only used when `uniqueName` is not set.
-
-If your project doesn't set `uniqueName` and depends on a specific Trusted Types policy name, you need to update your CSP configuration or explicitly set it:
+The fallback value of [output.trustedTypes.policyName](/config/output#outputtrustedtypes) changed from `'webpack'` to `'rspack'`. This fallback is only used when `output.uniqueName` is unset. If you relied on the old value, update your CSP or set it explicitly:
 
 ```js title="rspack.config.mjs"
 export default {
@@ -217,11 +201,11 @@ export default {
 
 ### Removed output.charset
 
-The `output.charset` configuration has been removed. This option was used to add a `charset` attribute to generated `<script>` tags, but modern browsers default to UTF-8 encoding, so this configuration is no longer needed.
+`output.charset` has been removed. Generated `<script>` tags already default to UTF-8 in modern browsers.
 
 ### Removed optimization.removeAvailableModules
 
-The `optimization.removeAvailableModules` configuration has been removed. This option had no actual effect in Rspack and can be safely removed from your configuration:
+`optimization.removeAvailableModules` has been removed. It had no effect in Rspack, so you can delete it:
 
 ```diff title="rspack.config.mjs"
 export default {
@@ -235,7 +219,7 @@ export default {
 
 ### Changed default parameters of stats.toJson()
 
-When `stats.toJson()` is called without parameters, the default values for the following fields have been changed to `false`:
+`stats.toJson()` without arguments now defaults these fields to `false`:
 
 - `modules`: Module information
 - `assets`: Asset information
@@ -243,7 +227,7 @@ When `stats.toJson()` is called without parameters, the default values for the f
 - `chunkGroups`: Chunk group information
 - `entryPoints`: Entry point information
 
-This means that calling `stats.toJson()` will no longer include these details by default, and the returned object will be more compact. If you need detailed information, you can explicitly pass parameters when calling `toJson()`:
+Pass them explicitly if you still need them:
 
 ```js
 const statsData = stats.toJson({
@@ -255,11 +239,11 @@ const statsData = stats.toJson({
 });
 ```
 
-> For detailed parameter configuration, refer to [Stats](/config/stats)
+> See [Stats](/config/stats) for the full option list.
 
 ### Removed profile and stats.profile configuration
 
-The top-level `profile` configuration and `stats.profile` configuration have been removed. It's recommended to use [Rsdoctor](/guide/optimization/use-rsdoctor) for performance analysis:
+The top-level `profile` option and `stats.profile` have been removed. Use [Rsdoctor](/guide/optimization/use-rsdoctor) for performance analysis:
 
 ```diff title="rspack.config.mjs"
 export default {
@@ -274,7 +258,7 @@ export default {
 
 ### Removed EsmLibraryPlugin
 
-The `rspack.EsmLibraryPlugin` plugin has been removed. You can generate ESM format output by configuring [output.library](/config/output#outputlibrary):
+`rspack.EsmLibraryPlugin` has been removed. Configure [output.library](/config/output#outputlibrary) instead:
 
 ```diff title="rspack.config.mjs"
 -import { EsmLibraryPlugin } from '@rspack/core';
@@ -291,7 +275,7 @@ export default {
 
 ### Removed WarnCaseSensitiveModulesPlugin
 
-The `WarnCaseSensitiveModulesPlugin` plugin has been removed. You can use the [CaseSensitivePlugin](/plugins/webpack/case-sensitive-plugin) plugin to detect case-sensitive module reference issues:
+`WarnCaseSensitiveModulesPlugin` has been removed. Use [CaseSensitivePlugin](/plugins/webpack/case-sensitive-plugin) instead:
 
 ```diff title="rspack.config.mjs"
 import { rspack } from '@rspack/core';
@@ -306,7 +290,7 @@ export default {
 
 ### Removed getHooks method from some plugins
 
-The `getHooks` method on plugins has been removed. Please use the `getCompilationHooks` method instead:
+Some plugin `getHooks` helpers were removed. Use `getCompilationHooks` instead:
 
 ```diff title="my-plugin.js"
 class MyPlugin {
@@ -325,9 +309,7 @@ class MyPlugin {
 
 ### Adjusted HtmlRspackPlugin configuration
 
-The `sri` configuration of [HtmlRspackPlugin](/plugins/rspack/html-rspack-plugin) has been removed.
-
-If you need SRI functionality, you can use the [SubresourceIntegrityPlugin](/plugins/rspack/subresource-integrity-plugin) plugin.
+The `sri` option on [HtmlRspackPlugin](/plugins/rspack/html-rspack-plugin) has been removed. Use [SubresourceIntegrityPlugin](/plugins/rspack/subresource-integrity-plugin) instead.
 
 ```diff title="rspack.config.mjs"
 export default {
@@ -344,7 +326,7 @@ export default {
 
 ### Adjusted LightningCssMinimizerRspackPlugin configuration
 
-The following options of [LightningCssMinimizerRspackPlugin](/plugins/rspack/lightning-css-minimizer-rspack-plugin) have been removed:
+These [LightningCssMinimizerRspackPlugin](/plugins/rspack/lightning-css-minimizer-rspack-plugin) options were removed:
 
 #### Removed draft
 
@@ -391,13 +373,7 @@ export default {
 
 ### Default extensions change
 
-Rspack 2.0 no longer includes `.wasm` in the default [resolve.extensions](/config/resolve#resolveextensions) used for JavaScript requests.
-
-In practice, this means extension-less requests such as `import './module'` or `require('./module')` will no longer try `./module.wasm` by default.
-
-Explicit imports like `import './module.wasm'` are not affected.
-
-If you need to preserve the previous behavior, add `.wasm` back to the corresponding `resolve.byDependency` entries:
+Rspack 2.0 no longer includes `.wasm` in the default [resolve.extensions](/config/resolve#resolveextensions) for JavaScript requests. Extension-less requests such as `import './module'` or `require('./module')` no longer try `./module.wasm`, while explicit `.wasm` imports still work. Add `.wasm` back to `resolve.byDependency` if you need the old behavior:
 
 ```js title="rspack.config.mjs"
 export default {
@@ -416,9 +392,7 @@ export default {
 
 ### CSS resolve conditions
 
-Rspack 2.0 no longer includes `webpack` in the default CSS `@import` resolve conditions.
-
-If you need to preserve the previous behavior, add `webpack` back explicitly:
+Rspack 2.0 no longer includes `webpack` in the default CSS `@import` resolve conditions. Add it back explicitly if you need the old behavior:
 
 ```js title="rspack.config.mjs"
 export default {
@@ -436,12 +410,12 @@ export default {
 
 ### Changed `devtool` default value
 
-The default value of the [devtool](/config/devtool) option has changed:
+The default value of [devtool](/config/devtool) now depends on `mode`:
 
 - When `mode` is `development`, the default value of `devtool` has been changed from `eval` to `cheap-module-source-map`
 - When `mode` is `production` and you are using `@rspack/cli`, the default value of `devtool` has been changed from `source-map` to `false`
 
-If you need source maps in production, we recommend setting `devtool` to `source-map` or `hidden-source-map`:
+Set `devtool` to `source-map` or `hidden-source-map` if you still need production source maps:
 
 ```js title="rspack.config.mjs"
 const isProd = process.env.NODE_ENV === 'production';
@@ -453,12 +427,12 @@ export default {
 
 ### Removed runtime module deprecated properties
 
-The following deprecated properties of Runtime module have been removed:
+These deprecated Runtime module properties were removed:
 
 - `constructorName` - Constructor name property
 - `moduleIdentifier` - Module identifier property
 
-If you used these properties in custom plugins, you need to update your code:
+Update custom plugins accordingly:
 
 ```diff title="my-plugin.js"
 class MyPlugin {
@@ -478,7 +452,7 @@ class MyPlugin {
 
 ### ProgressPlugin handler signature change
 
-The `ProgressPlugin` custom handler's third argument has changed from `items: string[]` to a structured `info` object.
+The third argument of a custom `ProgressPlugin` handler is now a structured `info` object instead of `items: string[]`.
 
 ```diff
 - (percent, msg, items) => void
@@ -492,9 +466,7 @@ The `ProgressPlugin` custom handler's third argument has changed from `items: st
 
 ### Changed default value of `resolve.roots`
 
-The resolve's [roots](/config/resolve#resolveroots) configuration default value has been changed from `[ context ]` to `[]`.
-
-If you rely on server-relative URL resolution that expects paths to resolve relative to the `roots` directories, explicitly configure the `roots` option:
+The default value of [resolve.roots](/config/resolve#resolveroots) changed from `[ context ]` to `[]`. Set it explicitly if you rely on server-relative URL resolution from `roots`:
 
 ```js title="rspack.config.mjs"
 export default {
@@ -506,15 +478,15 @@ export default {
 
 ### Removed `readResourceForScheme` hook
 
-`NormalModule.getCompilationHooks(compilation).readResourceForScheme` has been removed. This hook was only a legacy alias for `readResource.for(scheme)`, so migrate to that API directly.
+`NormalModule.getCompilationHooks(compilation).readResourceForScheme` has been removed. Use `readResource.for(scheme)` directly.
 
 ### `@module-federation/runtime-tools` is declared as optional peerDependency
 
-The `@module-federation/runtime-tools` package has been changed from `dependencies` to optional `peerDependencies` (declared via `peerDependencies` + `peerDependenciesMeta.optional`). If you are using [ModuleFederationPlugin](/plugins/webpack/module-federation-plugin), ensure that this package is explicitly installed in your project.
+`@module-federation/runtime-tools` moved from `dependencies` to optional `peerDependencies`. If you use [ModuleFederationPlugin](/plugins/webpack/module-federation-plugin), install it explicitly.
 
 ### Removed `module.unsafeCache`
 
-`module.unsafeCache` was previously a performance optimization option. Because it conflicts with Rspack's Incremental Build and Persistent Cache mechanisms, it has been officially removed.
+`module.unsafeCache` has been removed because it conflicts with Incremental Build and Persistent Cache.
 
 ## Experimental configuration changes
 
