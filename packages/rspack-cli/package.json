@@ -1,6 +1,6 @@
 {
   "name": "@rspack/cli",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "CLI for rspack",
   "homepage": "https://rspack.rs",
   "bugs": "https://github.com/web-infra-dev/rspack/issues",
@@ -47,6 +47,7 @@
     "exit-hook": "^5.1.0",
     "jiti": "^2.6.1",
     "prebundle": "^1.6.4",
+    "rspack-merge": "0.1.1",
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
